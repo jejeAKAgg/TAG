@@ -1,11 +1,13 @@
 package players;
 
 import core.*;
+import players.heuristics.PureScoreHeuristic;
 import players.human.ActionController;
 import players.human.HumanConsolePlayer;
 import players.human.HumanGUIPlayer;
 import players.mcts.MCTSParams;
 import players.mcts.MCTSPlayer;
+import players.mcts.MCTSEnums;
 import players.rmhc.RMHCParams;
 import players.rmhc.RMHCPlayer;
 import players.simple.OSLAPlayer;
@@ -34,7 +36,13 @@ public enum PlayerType {
     Random (new ArrayList<Property>() {{ add(Simple); add(Stochastic); }}),
     OSLA (new ArrayList<Property>() {{ add(Simple); add(Stochastic); add(ForwardPlanning); add(Greedy); }}),
     MCTS (new ArrayList<Property>() {{ add(Stochastic); add(ForwardPlanning); add(TreeSearch); }}),
-    RMHC (new ArrayList<Property>() {{ add(Stochastic); add(ForwardPlanning); add(EvolutionaryAlgorithm); }});
+    RMHC (new ArrayList<Property>() {{ add(Stochastic); add(ForwardPlanning); add(EvolutionaryAlgorithm); }}),
+
+    // --- AJOUTS ---
+    GM_MCTS (new ArrayList<Property>() {{ add(Stochastic); add(ForwardPlanning); add(TreeSearch); }}),
+    IS_MCTS (new ArrayList<Property>() {{ add(Stochastic); add(ForwardPlanning); add(TreeSearch); }}),
+    MAST(new ArrayList<Property>() {{ add(Stochastic); add(ForwardPlanning); add(TreeSearch); }});
+    // --------------
 
     /**
      * Converts a given string to the enum type corresponding to the player.
@@ -52,6 +60,13 @@ public enum PlayerType {
                 return MCTS;
             case "rmhc":
                 return RMHC;
+
+            // --- AJOUTS ---
+            case "gm-mcts": return GM_MCTS;
+            case "is-mcts": return IS_MCTS;
+            case "mast": return MAST;
+            // --------------
+            
             case "console":
                 return HumanConsolePlayer;
             case "gui":
@@ -101,6 +116,50 @@ public enum PlayerType {
                 }
                 player = new RMHCPlayer((RMHCParams) params);
                 break;
+
+            // --- AJOUTS ---
+            // --- 1. GM-MCTS (Perfect Information) ---
+            case GM_MCTS:
+                MCTSParams gmParams = new MCTSParams();
+                gmParams.setRandomSeed(seed);
+                gmParams.budgetType = PlayerConstants.BUDGET_TIME;
+                gmParams.budget = 100;
+                gmParams.information = MCTSEnums.Information.Open_Loop;
+                gmParams.rolloutLength = 100;
+                gmParams.maxTreeDepth = 100;
+                gmParams.K = 1.414;
+                gmParams.selectionPolicy = MCTSEnums.SelectionPolicy.ROBUST;
+                player = new MCTSPlayer(gmParams);
+                break;
+
+            // --- 2. IS-MCTS (Information Set) ---
+            case IS_MCTS:
+                MCTSParams isParams = new MCTSParams();
+                isParams.setRandomSeed(seed);
+                isParams.budgetType = PlayerConstants.BUDGET_TIME;
+                isParams.budget = 100;
+                isParams.information = MCTSEnums.Information.Information_Set; // Basé sur IS-MCTS.json
+                isParams.rolloutLength = 100;
+                isParams.maxTreeDepth = 100;
+                isParams.K = 1.414;
+                isParams.selectionPolicy = MCTSEnums.SelectionPolicy.ROBUST;
+                player = new MCTSPlayer(isParams);
+                break;
+
+            // --- 3. MAST ---
+            case MAST:
+                MCTSParams mastParams = new MCTSParams();
+                mastParams.setRandomSeed(seed);
+                mastParams.budgetType = PlayerConstants.BUDGET_TIME;
+                mastParams.budget = 100;
+                mastParams.information = MCTSEnums.Information.Information_Set;
+                mastParams.rolloutLength = 100;
+                mastParams.K = 1.41;
+                mastParams.MAST = MCTSEnums.MASTType.Rollout; // Basé sur MAST.json
+                mastParams.opponentTreePolicy = MCTSEnums.OpponentTreePolicy.OneTree; // Basé sur MAST.json
+                mastParams.selectionPolicy = MCTSEnums.SelectionPolicy.ROBUST;
+                player = new MCTSPlayer(mastParams);
+                break;
         }
 
         return player;
@@ -109,7 +168,12 @@ public enum PlayerType {
     public PlayerParameters createParameterSet() {
         switch(this) {
             case MCTS:
+            // --- AJOUTS ---
+            case GM_MCTS:
+            case IS_MCTS:
+            case MAST:
                 return new MCTSParams();
+            // -----------------------------------
             case RMHC:
                 return new RMHCParams();
             default:
