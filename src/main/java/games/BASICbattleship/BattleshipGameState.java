@@ -3,6 +3,7 @@ package games.BASICbattleship;
 import games.GameType;
 import core.AbstractGameState;
 import core.AbstractParameters;
+import core.AbstractPlayer;
 import core.CoreConstants;
 import core.components.Component;
 import core.components.GridBoard;
@@ -74,11 +75,14 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
         // Ensure the copy has a deterministic but unique random seed
         copy.rnd = new Random(this.rnd.nextLong()); 
 
+        // System.out.println("Copy called with playerId = " + playerId); [DEBUG]
+
         if (playerId == -1) {
             
             // Observer view: Full visibility of both grids
             copy.player0ShipGrid = this.player0ShipGrid.copy();
             copy.player1ShipGrid = this.player1ShipGrid.copy();
+        
         } else {
             
             // Player view: Hidden information logic
