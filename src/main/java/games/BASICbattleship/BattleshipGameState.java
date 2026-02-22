@@ -68,6 +68,7 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
         long startTime = System.nanoTime();
 
         BattleshipGameState copy = new BattleshipGameState(gameParameters.copy(), getNPlayers());
+        
         copy.playerHP = this.playerHP.clone();
         copy.player0ShotGrid = this.player0ShotGrid.copy();
         copy.player1ShotGrid = this.player1ShotGrid.copy();
@@ -124,7 +125,7 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
      * Checks if a ship of a given size can be placed at specific coordinates.
      */
 
-    private boolean canPlaceShip(GridBoard grid, int x, int y, int size, boolean horizontal) {
+    private boolean canPlaceShip(GridBoard grid, int x, int y, int size, boolean horizontal, List<int[]> missCoords) {
         int width = grid.getWidth();
         int height = grid.getHeight();
 
@@ -164,7 +165,7 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
                     int y = r.nextInt(grid.getHeight());
                     boolean horizontal = r.nextBoolean();
                     
-                    if (canPlaceShip(grid, x, y, shipSize, horizontal)) {
+                    if (canPlaceShip(grid, x, y, shipSize, horizontal, new ArrayList<>())) {
                         placeShip(grid, x, y, shipSize, horizontal);
                         placed = true;
                     }
@@ -195,6 +196,26 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
         }
     }
 
+    /**
+     * Retrieves the current player's shot tracking grid (radar).
+     * This provides a view of the opponent's territory from the active player's perspective.
+     * * @return The {@link GridBoard} containing the current player's firing history.
+     */
+
+    @Override
+    public GridBoard getGridBoard() {
+        return (getCurrentPlayer() == 0) ? player0ShotGrid : player1ShotGrid;
+    }
+
+    /**
+     * Calculates the game score for a specific player.
+     * If the game is over, returns 1.0 for a win and 0.0 for a loss.
+     * During play, returns a normalized value (0.0 to 1.0) representing the 
+     * percentage of the opponent's total ship health that has been destroyed.
+     * * @param playerId The ID of the player for whom to calculate the score.
+     * @return A double between 0.0 and 1.0 indicating player progress or result.
+     */
+    
     @Override
     public double getGameScore(int playerId) {
         if (playerResults[playerId] == CoreConstants.GameResult.WIN_GAME) return 1.0;
@@ -259,12 +280,25 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
 
     @Override
     public void printToConsole() {
-        System.out.println("Battleship Game State");
-    }
-
-    @Override
-    public GridBoard getGridBoard() {
-        return player0ShotGrid;
+        System.out.println("========================================");
+        System.out.println("BATTLESHIP STATE - PERSPECTIVE: " + (getCurrentPlayer() == 0 ? "P0" : "P1"));
+        System.out.println("Phase: " + getGamePhase() + " | Round: " + getRoundCounter());
+        System.out.println("HP: P0 = " + playerHP[0] + " | P1 = " + playerHP[1]);
+        System.out.println("----------------------------------------");
+        
+        // Affichage des grilles du joueur actuel
+        if (getCurrentPlayer() == 0) {
+            System.out.println("P0 SHIP GRID (Ma flotte):");
+            System.out.println(player0ShipGrid.toString());
+            System.out.println("P0 SHOT GRID (Mes tirs):");
+            System.out.println(player0ShotGrid.toString());
+        } else {
+            System.out.println("P1 SHIP GRID (Ma flotte):");
+            System.out.println(player1ShipGrid.toString());
+            System.out.println("P1 SHOT GRID (Mes tirs):");
+            System.out.println(player1ShotGrid.toString());
+        }
+        System.out.println("========================================");
     }
 
     public static void resetPerformanceMetrics() {
