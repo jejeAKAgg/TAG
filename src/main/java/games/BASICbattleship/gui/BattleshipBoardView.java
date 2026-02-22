@@ -13,7 +13,6 @@ import static gui.GUI.defaultItemSize;
  * Visual representation of a Battleship grid board.
  * This class handles the rendering of cells including water, ships, hits, and misses.
  */
-
 public class BattleshipBoardView extends ComponentView implements IScreenHighlight {
 
     private GridBoard gridBoard;
@@ -22,7 +21,6 @@ public class BattleshipBoardView extends ComponentView implements IScreenHighlig
      * Creates a new view for the specified grid board.
      * @param grid The GridBoard component to visualize.
      */
-
     public BattleshipBoardView(GridBoard grid) {
         super(grid, grid.getWidth() * defaultItemSize, grid.getHeight() * defaultItemSize);
         this.gridBoard = grid;
@@ -32,7 +30,6 @@ public class BattleshipBoardView extends ComponentView implements IScreenHighlig
      * Updates the underlying data of the view.
      * @param grid The updated GridBoard state.
      */
-
     public void updateComponent(GridBoard grid) {
         this.gridBoard = grid;
     }
@@ -49,7 +46,6 @@ public class BattleshipBoardView extends ComponentView implements IScreenHighlig
      * @param x Starting X coordinate.
      * @param y Starting Y coordinate.
      */
-    
     public void drawGridBoard(Graphics2D g, GridBoard grid, int x, int y) {
         int width = grid.getWidth() * defaultItemSize;
         int height = grid.getHeight() * defaultItemSize;
@@ -70,7 +66,6 @@ public class BattleshipBoardView extends ComponentView implements IScreenHighlig
     /**
      * Renders an individual cell based on its state (SHIP, WATER, HIT, MISS).
      */
-
     private void drawCell(Graphics2D g, BoardNode element, int x, int y) {
         
         // Draw cell border

@@ -16,7 +16,6 @@ import java.util.Random;
  * The Forward Model handles the game logic, transition rules, and action generation for Battleship.
  * This implementation uses an optimized HP-tracking system for fast win-condition checking.
  */
-
 public class BattleshipForwardModel extends StandardForwardModel {
 
     /**
@@ -24,7 +23,6 @@ public class BattleshipForwardModel extends StandardForwardModel {
      * and performs random ship placement.
      * @param firstState The initial state to be configured.
      */
-
     @Override
     protected void _setup(AbstractGameState firstState) {
         BattleshipGameState bgs = (BattleshipGameState) firstState;
@@ -60,7 +58,6 @@ public class BattleshipForwardModel extends StandardForwardModel {
      * @param gameState The current state of the game.
      * @return A list of available actions.
      */
-
     @Override
     protected List<AbstractAction> _computeAvailableActions(AbstractGameState gameState) {
         BattleshipGameState bgs = (BattleshipGameState) gameState;
@@ -90,7 +87,6 @@ public class BattleshipForwardModel extends StandardForwardModel {
      * @param currentState The state after the action execution.
      * @param action The action that was executed.
      */
-
     @Override
     protected void _afterAction(AbstractGameState currentState, AbstractAction action) {
         BattleshipGameState bgs = (BattleshipGameState) currentState;
@@ -113,7 +109,6 @@ public class BattleshipForwardModel extends StandardForwardModel {
      * @param bgs The current game state.
      * @return true if the opponent has no remaining ship segments.
      */
-
     private boolean checkWin(BattleshipGameState bgs) {
         int opponentID = 1 - bgs.getCurrentPlayer();
         

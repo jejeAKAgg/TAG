@@ -13,7 +13,6 @@ import java.util.Map;
  * A performance-focused listener that records computational efficiency metrics.
  * It tracks Forward Model (FM) calls and execution time to analyze AI performance.
  */
-
 public class BasicPerformanceListener implements IGameListener {
     
     protected FileStatsLogger logger;
@@ -22,7 +21,6 @@ public class BasicPerformanceListener implements IGameListener {
     /**
      * Initializes the listener and sets the output file path for performance data.
      */
-
     public BasicPerformanceListener() {
         
         // Output file configuration for performance tracking
@@ -33,7 +31,6 @@ public class BasicPerformanceListener implements IGameListener {
      * Responds to game events to manage metric lifecycle and recording.
      * @param event The event occurring in the game engine.
      */
-
     @Override
     public void onEvent(Event event) {
         
@@ -72,7 +69,6 @@ public class BasicPerformanceListener implements IGameListener {
     /**
      * Processes remaining data and closes the logger.
      */
-
     @Override
     public void report() { 
         logger.processDataAndFinish(); 

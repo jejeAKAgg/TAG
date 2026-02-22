@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * Represents the state of a Battleship game.
  * Handles hidden information by randomizing opponent ship locations during state copying.
  */
-
 public class BattleshipGameState extends AbstractGameState implements IPrintable, IGridGameState {
 
     // Performance metrics for research analysis
@@ -43,7 +42,6 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
      * @param gameParameters Game configuration (grid size, ship sizes, etc.)
      * @param nPlayers Number of players (typically 2)
      */
-
     public BattleshipGameState(AbstractParameters gameParameters, int nPlayers) {
         super(gameParameters, nPlayers);
         this.rnd = new Random(gameParameters.getRandomSeed());
@@ -62,7 +60,6 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
      * * @param playerId The perspective from which the copy is made (-1 for full visibility).
      * @return A deep copy of the state.
      */
-
     @Override
     protected AbstractGameState _copy(int playerId) {
         long startTime = System.nanoTime();
@@ -114,7 +111,6 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
     /**
      * Resets a grid to all WATER nodes.
      */
-
     private void resetGrid(GridBoard grid) {
         for(int x=0; x<grid.getWidth(); x++)
             for(int y=0; y<grid.getHeight(); y++)
@@ -124,7 +120,6 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
     /**
      * Checks if a ship of a given size can be placed at specific coordinates.
      */
-
     private boolean canPlaceShip(GridBoard grid, int x, int y, int size, boolean horizontal, List<int[]> missCoords) {
         int width = grid.getWidth();
         int height = grid.getHeight();
@@ -147,7 +142,6 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
      * Randomly places ships on the provided grid based on the game parameters.
      * Uses a retry loop to ensure all ships are successfully placed.
      */
-
     public void randomizeGrid(GridBoard grid, Random r) {
         BattleshipParameters params = (BattleshipParameters) getGameParameters();
         boolean generationComplete = false;
@@ -183,7 +177,6 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
     /**
      * Writes the SHIP component name to the specified grid coordinates.
      */
-
     private void placeShip(GridBoard grid, int x, int y, int size, boolean horizontal) {
         if (horizontal) {
             for (int i = 0; i < size; i++) {
@@ -201,7 +194,6 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
      * This provides a view of the opponent's territory from the active player's perspective.
      * * @return The {@link GridBoard} containing the current player's firing history.
      */
-
     @Override
     public GridBoard getGridBoard() {
         return (getCurrentPlayer() == 0) ? player0ShotGrid : player1ShotGrid;
@@ -215,7 +207,6 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
      * * @param playerId The ID of the player for whom to calculate the score.
      * @return A double between 0.0 and 1.0 indicating player progress or result.
      */
-    
     @Override
     public double getGameScore(int playerId) {
         if (playerResults[playerId] == CoreConstants.GameResult.WIN_GAME) return 1.0;
@@ -231,7 +222,6 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
     /**
      * Counts the total number of HIT markers on the player's shot tracking grid.
      */
-
     private double countHits(int playerId) {
         GridBoard myShots = (playerId == 0) ? player0ShotGrid : player1ShotGrid;
         double hits = 0;

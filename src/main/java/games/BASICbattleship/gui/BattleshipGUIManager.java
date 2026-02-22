@@ -18,7 +18,6 @@ import java.util.Set;
  * Manager for the Battleship Graphical User Interface.
  * Arranges the player's fleet (defense) and radar (attack) views.
  */
-
 public class BattleshipGUIManager extends AbstractGUIManager {
 
     protected BattleshipBoardView playerFleetView;
@@ -31,7 +30,6 @@ public class BattleshipGUIManager extends AbstractGUIManager {
      * @param ac Controller for human player actions.
      * @param human Set of player IDs controlled by humans.
      */
-
     public BattleshipGUIManager(GamePanel parent, Game game, ActionController ac, Set<Integer> human) {
         super(parent, game, ac, human);
         if (game == null) return;
@@ -86,7 +84,6 @@ public class BattleshipGUIManager extends AbstractGUIManager {
      * Defines the maximum number of actions that can be displayed at once.
      * For example, on a 10x10 grid, this is 100.
      */
-
     @Override
     public int getMaxActionSpace() {
         // We retrieve the grid size from the parameters to calculate total cells
@@ -99,7 +96,6 @@ public class BattleshipGUIManager extends AbstractGUIManager {
      * @param player The current player.
      * @param gameState The current state of the game.
      */
-
     @Override
     protected void _update(AbstractPlayer player, AbstractGameState gameState) {
         if (gameState != null) {
