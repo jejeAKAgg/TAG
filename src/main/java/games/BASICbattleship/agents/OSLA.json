@@ -1,0 +1,9 @@
+{
+  "class": "players.simple.OSLAPlayer",
+  "name": "OSLA",
+  "params": {
+    "budgetType": "BUDGET_TIME",
+    "budget": 100,
+    "heuristic": "core.AbstractGameState::getHeuristicScore"
+  }
+}

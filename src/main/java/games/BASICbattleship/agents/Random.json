@@ -1,0 +1,8 @@
+{
+  "class": "players.simple.RandomPlayer",
+  "name": "Random",
+  "params": {
+    "budgetType": "BUDGET_TIME",
+    "budget": 100
+  }
+}
