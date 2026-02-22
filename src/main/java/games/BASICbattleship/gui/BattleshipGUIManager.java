@@ -4,6 +4,7 @@ import core.AbstractGameState;
 import core.AbstractPlayer;
 import core.Game;
 import games.BASICbattleship.BattleshipGameState;
+import games.BASICbattleship.BattleshipParameters;
 import gui.AbstractGUIManager;
 import gui.GamePanel;
 import gui.IScreenHighlight;
@@ -83,12 +84,14 @@ public class BattleshipGUIManager extends AbstractGUIManager {
 
     /**
      * Defines the maximum number of actions that can be displayed at once.
-     * For a 5x5 grid, this is 25.
+     * For example, on a 10x10 grid, this is 100.
      */
 
     @Override
     public int getMaxActionSpace() {
-        return 25; 
+        // We retrieve the grid size from the parameters to calculate total cells
+        BattleshipParameters params = (BattleshipParameters) game.getGameState().getGameParameters();
+        return params.gridSize * params.gridSize; 
     }
 
     /**
