@@ -39,7 +39,6 @@ public enum PlayerType {
     RMHC (new ArrayList<Property>() {{ add(Stochastic); add(ForwardPlanning); add(EvolutionaryAlgorithm); }}),
 
     // --- AJOUTS ---
-    GM_MCTS (new ArrayList<Property>() {{ add(Stochastic); add(ForwardPlanning); add(TreeSearch); }}),
     IS_MCTS (new ArrayList<Property>() {{ add(Stochastic); add(ForwardPlanning); add(TreeSearch); }}),
     MAST(new ArrayList<Property>() {{ add(Stochastic); add(ForwardPlanning); add(TreeSearch); }});
     // --------------
@@ -62,7 +61,6 @@ public enum PlayerType {
                 return RMHC;
 
             // --- AJOUTS ---
-            case "gm-mcts": return GM_MCTS;
             case "is-mcts": return IS_MCTS;
             case "mast": return MAST;
             // --------------
@@ -118,21 +116,7 @@ public enum PlayerType {
                 break;
 
             // --- AJOUTS ---
-            // --- 1. GM-MCTS (Perfect Information) ---
-            case GM_MCTS:
-                MCTSParams gmParams = new MCTSParams();
-                gmParams.setRandomSeed(seed);
-                gmParams.budgetType = PlayerConstants.BUDGET_TIME;
-                gmParams.budget = 100;
-                gmParams.information = MCTSEnums.Information.Open_Loop;
-                gmParams.rolloutLength = 100;
-                gmParams.maxTreeDepth = 100;
-                gmParams.K = 1.414;
-                gmParams.selectionPolicy = MCTSEnums.SelectionPolicy.ROBUST;
-                player = new MCTSPlayer(gmParams);
-                break;
-
-            // --- 2. IS-MCTS (Information Set) ---
+            // --- 1. IS-MCTS (Information Set) ---
             case IS_MCTS:
                 MCTSParams isParams = new MCTSParams();
                 isParams.setRandomSeed(seed);
@@ -146,7 +130,7 @@ public enum PlayerType {
                 player = new MCTSPlayer(isParams);
                 break;
 
-            // --- 3. MAST ---
+            // --- 2. MAST ---
             case MAST:
                 MCTSParams mastParams = new MCTSParams();
                 mastParams.setRandomSeed(seed);
@@ -169,7 +153,6 @@ public enum PlayerType {
         switch(this) {
             case MCTS:
             // --- AJOUTS ---
-            case GM_MCTS:
             case IS_MCTS:
             case MAST:
                 return new MCTSParams();
