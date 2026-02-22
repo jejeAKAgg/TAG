@@ -32,7 +32,7 @@ public class BattleshipGUIManager extends AbstractGUIManager {
      */
     public BattleshipGUIManager(GamePanel parent, Game game, ActionController ac, Set<Integer> human) {
         super(parent, game, ac, human);
-        if (game == null) return;
+        if (game == null || game.getGameState() == null) return;
 
         BattleshipGameState gameState = (BattleshipGameState) game.getGameState();
         
@@ -86,9 +86,7 @@ public class BattleshipGUIManager extends AbstractGUIManager {
      */
     @Override
     public int getMaxActionSpace() {
-        // We retrieve the grid size from the parameters to calculate total cells
-        BattleshipParameters params = (BattleshipParameters) game.getGameState().getGameParameters();
-        return params.gridSize * params.gridSize; 
+        return 100; // For a 10x10 grid, there are 100 possible shot locations
     }
 
     /**
