@@ -13,7 +13,7 @@ public class RunBattleshipTournament {
             
             // --- CONFIG TOURNOI ---
             "mode=exhaustive", // Make each agent play against every other agent in a round-robin format
-            "matchups=15000", // Total number of matches to be played between each pair of agents
+            "matchups=1000", // Total number of matches to be played between each pair of agents
             "seed=42",
             
             // --- OTHER METRICS ---
