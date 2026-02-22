@@ -2,7 +2,7 @@ package games.SMARTbattleship.gui;
 
 import core.components.BoardNode;
 import core.components.GridBoard;
-import games.BASICbattleship.BattleshipConstants;
+import games.SMARTbattleship.BattleshipConstants;
 import gui.views.ComponentView;
 import gui.IScreenHighlight;
 

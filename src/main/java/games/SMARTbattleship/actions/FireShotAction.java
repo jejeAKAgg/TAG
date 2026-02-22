@@ -4,8 +4,8 @@ import core.AbstractGameState;
 import core.actions.AbstractAction;
 import core.components.BoardNode;
 import core.components.GridBoard;
-import games.BASICbattleship.BattleshipConstants;
-import games.BASICbattleship.BattleshipGameState;
+import games.SMARTbattleship.BattleshipConstants;
+import games.SMARTbattleship.BattleshipGameState;
 
 import java.util.Objects;
 

@@ -6,7 +6,7 @@ import core.CoreConstants;
 import core.actions.AbstractAction;
 import core.components.BoardNode;
 import core.components.GridBoard;
-import games.BASICbattleship.actions.FireShotAction;
+import games.SMARTbattleship.actions.FireShotAction;
 
 import java.util.ArrayList;
 import java.util.List;
