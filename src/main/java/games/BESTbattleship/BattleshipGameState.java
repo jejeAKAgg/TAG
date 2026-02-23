@@ -23,10 +23,10 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class BattleshipGameState extends AbstractGameState implements IPrintable, IGridGameState {
 
-    // Performance metrics for research analysis
-    public static AtomicLong totalFMCALLS = new AtomicLong(0);
-    public static AtomicLong totalTimeInCopy = new AtomicLong(0);
-    public static AtomicLong fallbackCount = new AtomicLong(0);
+    // Performance metrics for research analysis, indexed by PlayerID [0, 1]
+    public static AtomicLong[] totalFMCALLS = {new AtomicLong(0), new AtomicLong(0)};
+    public static AtomicLong[] totalTimeInCopy = {new AtomicLong(0), new AtomicLong(0)};
+    public static AtomicLong[] attemptsPerSolve = {new AtomicLong(0), new AtomicLong(0)};
 
     // Current health points for both players (number of ship cells remaining)
     public int[] playerHP;
@@ -87,17 +87,20 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
             // Player view: Only own ships are known, opponent's ships are randomized (smart determinisation)
             if (playerId == 0) {
                 copy.player0ShipGrid = this.player0ShipGrid.copy();
-                copy.player1ShipGrid = smartDeterminiseGrid(this.player0ShotGrid, this.player1ShipGrid.getWidth(), this.rnd);
+                copy.player1ShipGrid = smartDeterminiseGrid(this.player0ShotGrid, this.player1ShipGrid.getWidth(), this.rnd, 0);
             } else {
                 copy.player1ShipGrid = this.player1ShipGrid.copy();
-                copy.player0ShipGrid = smartDeterminiseGrid(this.player1ShotGrid, this.player0ShipGrid.getWidth(), this.rnd);
+                copy.player0ShipGrid = smartDeterminiseGrid(this.player1ShotGrid, this.player0ShipGrid.getWidth(), this.rnd, 1);
             }
         }
 
-        totalFMCALLS.incrementAndGet();
-        long duration = System.nanoTime() - startTime;
-        totalTimeInCopy.addAndGet(duration);
-
+        // Metrics attribution to the requesting player
+        if (playerId >= 0 && playerId < 2) {
+            totalFMCALLS[playerId].incrementAndGet();
+            long duration = System.nanoTime() - startTime;
+            totalTimeInCopy[playerId].addAndGet(duration);
+        }
+        
         return copy;
     }
 
@@ -115,19 +118,20 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
      * @param knownShots The grid containing the current player's shot history (HIT/MISS).
      * @param size The dimensions of the grid.
      * @param r Random number generator for stochastic placement.
+     * @param playerID The ID of the player for whom we are generating the hypothesis (used for logging/metrics).
      * @return A logically consistent {@link GridBoard} representing a possible opponent state.
      */
-    private GridBoard smartDeterminiseGrid(GridBoard knownShots, int size, Random r) {
+    private GridBoard smartDeterminiseGrid(GridBoard knownShots, int size, Random r, int playerID) {
         BattleshipParameters params = (BattleshipParameters) getGameParameters();
 
         GridBoard hypothesis = new GridBoard(size, size, new BoardNode(BattleshipConstants.WATER));
 
         // OPTIMISATION 1 : "Map of Misses"
-        // Used to quickly check if a cell is a known MISS without iterating through a list of coordinates (O(1) vs O(N)).
+        // Used to quickly check if a cell is a known MISS without iterating through a list of coordinates (O(1) vs O(N))
         boolean[][] missMap = new boolean[size][size];
         
-        // OPTIMISATION 2: "Pre-allocated Hit List" pour éviter les coûts de réallocation dynamique lors de l'ajout de hits.
-        // Used to avoid the overhead of dynamic resizing that comes with ArrayList when adding elements, based on maximum number of items.
+        // OPTIMISATION 2: "Pre-allocated Hit List"
+        // Used to avoid the overhead of dynamic resizing that comes with ArrayList when adding elements, based on maximum number of items
         List<int[]> hitCoords = new ArrayList<>(Arrays.stream(params.shipSizes).sum()); 
 
         // Extracting known HIT and MISS coordinates from the player's shot grid
@@ -142,14 +146,14 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
             }
         }
         
-        // On prépare la liste des bateaux une fois
+        // We prepare the list of ships once, and shuffle it for each attempt to add variability in placement
         List<Integer> shipsToPlace = new ArrayList<>(params.shipSizes.length);
 
-        // BOUCLE DE RANDOM RESTART (Garde-fou à 50 tentatives)
-        for (int attempts = 0; attempts < 50; attempts++) {
+        // Max attempts is a safeguard against infinite loops in cases of contradictory information (e.g., too many hits without enough space to place ships)
+        for (int attempts = 0; attempts < 10000; attempts++) {
             
             // OPTIMISATION 3 : "Fast Reset (Zero Allocation)""
-            // Just set the component name to WATER for all cells instead of creating new BoardNode instances.
+            // Just set the component name to WATER for all cells instead of creating new BoardNode instances
             resetGrid(hypothesis);
             
             shipsToPlace.clear();
@@ -174,7 +178,7 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
                         int startY = horizontal ? targetHit[1] : targetHit[1] - offset;
 
                         // Fast check (O(1))
-                        if (canPlaceShipFast(hypothesis, startX, startY, shipSize, horizontal, missMap)) {
+                        if (canPlaceShip(hypothesis, startX, startY, shipSize, horizontal, missMap)) {
                             placeShip(hypothesis, startX, startY, shipSize, horizontal);
                             placed = true;
                             
@@ -192,7 +196,7 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
                         int y = r.nextInt(size);
                         boolean horizontal = r.nextBoolean();
                         
-                        if (canPlaceShipFast(hypothesis, x, y, shipSize, horizontal, missMap)) {
+                        if (canPlaceShip(hypothesis, x, y, shipSize, horizontal, missMap)) {
                             placeShip(hypothesis, x, y, shipSize, horizontal);
                             placed = true;
                             break;
@@ -208,20 +212,18 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
 
             // If all ships are placed AND all hits are covered -> SUCCESS
             if (success && uncoveredHits.isEmpty()) {
+                attemptsPerSolve[playerID].addAndGet(attempts+1);
                 return hypothesis;
             }
         }
 
-        fallbackCount.incrementAndGet();
+        // No fallbacks this time, we throw an exception to signal that the constraints are likely contradictory (e.g., too many hits without enough space to place ships)
+        // helps identify potential bugs in the game logic or in the AI's understanding of the state
+        throw new IllegalStateException("CSP solver failed to find a valid state for player " + playerID + " after 10000 attempts.");
 
-        // FALLBACK: If we fail to find a consistent layout after 50 attempts (very rare or indicates contradictory information), we return a random grid.
-        resetGrid(hypothesis);
-        logEvent(null, "Fallback to random grid after 50 failed attempts in smart determinisation.");
-        randomizeGrid(hypothesis, r); 
-        return hypothesis;
     }
 
-    private boolean canPlaceShipFast(GridBoard grid, int x, int y, int size, boolean horizontal, boolean[][] missMap) {
+    private boolean canPlaceShip(GridBoard grid, int x, int y, int size, boolean horizontal, boolean[][] missMap) {
         int width = grid.getWidth();
         int height = grid.getHeight();
 
@@ -241,6 +243,13 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
         return true;
     }
 
+    private void placeShip(GridBoard grid, int x, int y, int size, boolean horizontal) {
+        for (int i = 0; i < size; i++) {
+            if (horizontal) ((BoardNode)grid.getElement(x + i, y)).setComponentName(BattleshipConstants.SHIP);
+            else ((BoardNode)grid.getElement(x, y + i)).setComponentName(BattleshipConstants.SHIP);
+        }
+    }
+
 
     private void removeCoveredHits(List<int[]> hits, int x, int y, int size, boolean horizontal) {
         for (int i = hits.size() - 1; i >= 0; i--) {
@@ -257,32 +266,11 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
         }
     }
 
-    private void resetGrid(GridBoard grid) {
-        for(int x=0; x<grid.getWidth(); x++)
-            for(int y=0; y<grid.getHeight(); y++)
-                grid.setElement(x, y, new BoardNode(BattleshipConstants.WATER));
-    }
-
-    private boolean canPlaceShip(GridBoard grid, int x, int y, int size, boolean horizontal, List<int[]> missCoords) {
-        int width = grid.getWidth();
-        int height = grid.getHeight();
-
-        if (horizontal) {
-            if (x < 0 || x + size > width || y < 0 || y >= height) return false;
-            for (int i = 0; i < size; i++) {
-                if (!((BoardNode)grid.getElement(x + i, y)).getComponentName().equals(BattleshipConstants.WATER)) return false;
-                if (isMiss(x + i, y, missCoords)) return false;
-            }
-        } else {
-            if (y < 0 || y + size > height || x < 0 || x >= width) return false;
-            for (int i = 0; i < size; i++) {
-                if (!((BoardNode)grid.getElement(x, y + i)).getComponentName().equals(BattleshipConstants.WATER)) return false;
-                if (isMiss(x, y + i, missCoords)) return false;
-            }
-        }
-        return true;
-    }
-
+     /**
+     * Sets up the own player's ships.
+     * @param grid The player's grid.
+     * @param r Random number generator.
+     */
     public void randomizeGrid(GridBoard grid, Random r) {
         BattleshipParameters params = (BattleshipParameters) getGameParameters();
         
@@ -294,54 +282,43 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
             resetGrid(grid); 
             generationComplete = true; 
 
+            // Setting up an empty MISS map
+            boolean[][] emptyMissMap = new boolean[grid.getWidth()][grid.getHeight()];
+
             for (int shipSize : params.shipSizes) {
                 boolean placed = false;
                 int attempts = 0; 
                 
-                // On essaie de placer ce bateau
                 while (!placed && attempts < 100) {
                     int x = r.nextInt(grid.getWidth());
                     int y = r.nextInt(grid.getHeight());
                     boolean horizontal = r.nextBoolean();
                     
-                    if (canPlaceShip(grid, x, y, shipSize, horizontal, new ArrayList<>())) {
+                    if (canPlaceShip(grid, x, y, shipSize, horizontal, emptyMissMap)) {
                         placeShip(grid, x, y, shipSize, horizontal);
                         placed = true;
                     }
                     attempts++;
                 }
 
-                // If we fail to place a ship, we mark the entire generation as failed and break out of the loop to restart from scratch.
+                // If we fail to place a ship, we mark the entire generation as failed and break out of the loop to restart from scratch
                 if (!placed) {
                     generationComplete = false;
                     break; // Restart
                 }
             }
 
-            // Note: No increment of globalAttempts that stops everything. We keep going until it works.
+            // Note: No increment of globalAttempts that stops everything. We keep going until it works
         }
     }
 
-    private boolean isMiss(int x, int y, List<int[]> missCoords) {
-        for(int[] m : missCoords) {
-            if (m[0] == x && m[1] == y) return true;
-        }
-        return false;
+    private void resetGrid(GridBoard grid) {
+        for(int x=0; x<grid.getWidth(); x++)
+            for(int y=0; y<grid.getHeight(); y++)
+                ((BoardNode)grid.getElement(x, y)).setComponentName(BattleshipConstants.WATER);
     }
 
 
-    private void placeShip(GridBoard grid, int x, int y, int size, boolean horizontal) {
-        String shipName = BattleshipConstants.SHIP; 
-        if (horizontal) {
-            for (int i = 0; i < size; i++) {
-                ((BoardNode)grid.getElement(x + i, y)).setComponentName(shipName);
-            }
-        } else { // Vertical
-            for (int i = 0; i < size; i++) {
-                ((BoardNode)grid.getElement(x, y + i)).setComponentName(shipName);
-            }
-        }
-    }
 
     @Override
     public GridBoard getGridBoard() {
@@ -349,29 +326,31 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
     }
 
     @Override
-    protected double _getHeuristicScore(int playerId) {
-        // 1. On garde ton score de base (Victoire/Défaite/Pourcentage de hits)
-        double baseScore = getGameScore(playerId);
+    public double getGameScore(int playerId) {
+        if (playerResults[playerId] == CoreConstants.GameResult.WIN_GAME) return 1.0;
+        if (playerResults[playerId] == CoreConstants.GameResult.LOSE_GAME) return 0.0;
         
-        // 2. On ajoute un petit bonus stratégique
-        // Si le joueur a des hits groupés, c'est mieux que des hits éparpillés
-        double strategicBonus = getClusteringBonus(playerId) * 0.1; // Poids faible (10%)
+        int totalHealth = Arrays.stream(((BattleshipParameters)getGameParameters()).shipSizes).sum();
+        
+        return countHits(playerId) / (double)totalHealth;
+    }
 
-        return baseScore + strategicBonus;
+    @Override
+    protected double _getHeuristicScore(int playerId) {
+        return getGameScore(playerId) + (getClusteringBonus(playerId) * 0.1);
     }
 
     private double getClusteringBonus(int playerId) {
         GridBoard myShots = (playerId == 0) ? player0ShotGrid : player1ShotGrid;
+        
         int connectedHits = 0;
         int w = myShots.getWidth();
         int h = myShots.getHeight();
 
-        // On parcourt la grille
+        // Visiting each cell to count adjacent HITs, which can indicate potential ship locations and thus provide a bonus to the heuristic score
         for (int x = 0; x < w; x++) {
             for (int y = 0; y < h; y++) {
-                // Si on a un HIT ici...
                 if (((BoardNode)myShots.getElement(x, y)).getComponentName().equals(BattleshipConstants.HIT)) {
-                    // ... on regarde à Droite et en Bas (pour éviter de compter deux fois)
                     if (x + 1 < w && ((BoardNode)myShots.getElement(x+1, y)).getComponentName().equals(BattleshipConstants.HIT)) {
                         connectedHits++;
                     }
@@ -381,20 +360,7 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
                 }
             }
         }
-        // On normalise (on suppose qu'avoir 5 connexions est le max utile pour l'heuristique)
         return Math.min(connectedHits, 5) / 5.0;
-    }
-
-    @Override
-    public double getGameScore(int playerId) {
-        if (playerResults[playerId] == CoreConstants.GameResult.WIN_GAME) return 1.0;
-        if (playerResults[playerId] == CoreConstants.GameResult.LOSE_GAME) return 0.0;
-
-        BattleshipParameters params = (BattleshipParameters) getGameParameters();
-        int totalHealth = 0;
-        for (int size : params.shipSizes) totalHealth += size;
-        
-        return countHits(playerId) / totalHealth;
     }
 
     private double countHits(int playerId) {
@@ -444,25 +410,14 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
         System.out.println("BATTLESHIP STATE - PERSPECTIVE: " + (getCurrentPlayer() == 0 ? "P0" : "P1"));
         System.out.println("Phase: " + getGamePhase() + " | Round: " + getRoundCounter());
         System.out.println("HP: P0 = " + playerHP[0] + " | P1 = " + playerHP[1]);
-        System.out.println("----------------------------------------");
-        
-        if (getCurrentPlayer() == 0) {
-            System.out.println("P0 SHIP GRID (Ma flotte):");
-            System.out.println(player0ShipGrid.toString());
-            System.out.println("P0 SHOT GRID (Mes tirs):");
-            System.out.println(player0ShotGrid.toString());
-        } else {
-            System.out.println("P1 SHIP GRID (Ma flotte):");
-            System.out.println(player1ShipGrid.toString());
-            System.out.println("P1 SHOT GRID (Mes tirs):");
-            System.out.println(player1ShotGrid.toString());
-        }
         System.out.println("========================================");
     }
 
     public static void resetPerformanceMetrics() {
-        totalFMCALLS.set(0);
-        totalTimeInCopy.set(0);
-        fallbackCount.set(0);
+        for (int i = 0; i < 2; i++) {
+            totalFMCALLS[i].set(0);
+            totalTimeInCopy[i].set(0);
+            attemptsPerSolve[i].set(0);
+        }
     }
 }
