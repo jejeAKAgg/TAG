@@ -92,7 +92,7 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
             }
         }
 
-        long count = totalFMCALLS.incrementAndGet();
+        totalFMCALLS.incrementAndGet();
         long duration = System.nanoTime() - startTime;
         totalTimeInCopy.addAndGet(duration);
 
