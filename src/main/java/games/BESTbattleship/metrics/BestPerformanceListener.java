@@ -8,108 +8,108 @@ import evaluation.metrics.Event;
 import games.BESTbattleship.BattleshipGameState;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
 import java.io.File;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
- * A performance-focused listener that records computational efficiency metrics.
- * It tracks Forward Model (FM) calls and execution time to analyze AI performance.
+ * A performance-focused listener that records computational efficiency metrics per player.
+ * It tracks Forward Model (FM) calls, search effort, and execution time.
  */
 public class BestPerformanceListener implements IGameListener {
     
-    protected FileStatsLogger logger;
     protected Game game;
 
-    /**
-     * Initializes the listener and sets the output file path for performance data.
-     */
-    public BestPerformanceListener() {
-        // Laisser vide, le logger sera créé dans setOutputDirectory
-    }
+    protected FileStatsLogger summaryLogger; // Logger for end-of-game summary metrics
+    protected FileStatsLogger detailLogger; // Logger for per-turn detailed metrics (e.g., effort per turn during smart determinisation)
+
+    private long[] lastEffort = new long[2]; // To track the cumulative effort at the last recorded point for each player, allowing us to calculate net effort per turn too
+
+    public BestPerformanceListener() {}
 
     @Override
     public boolean setOutputDirectory(String... folders) {
-        if (folders == null || folders.length == 0) return false;
-
         try {
-            String folderPath = String.join(File.separator, folders);
-            String fileName = "BEST_Battleship_PERFORMANCE.csv";
-            String fullPath = folderPath + File.separator + fileName;
+            String path = String.join(File.separator, folders) + File.separator;
+            new File(path).mkdirs();
 
-            File file = new File(fullPath);
-            if (file.getParentFile() != null) {
-                file.getParentFile().mkdirs();
-            }
-
-            this.logger = new FileStatsLogger(fullPath);
-            System.out.println(">>> Performance Logger initialisé : " + fullPath);
-            return true; // On retourne un boolean comme demandé
+            this.summaryLogger = new FileStatsLogger(path + "BEST_Battleship_SUMMARY.csv");
+            this.detailLogger = new FileStatsLogger(path + "BEST_Battleship_DETAILS.csv");
+            
+            System.out.println(">>> Performance Loggers initialisés: " + path);
+            return true;
         } catch (Exception e) {
-            System.err.println("Erreur Logger : " + e.getMessage());
             return false;
         }
     }
 
-    /**
-     * Responds to game events to manage metric lifecycle and recording.
-     * @param event The event occurring in the game engine.
-     */
     @Override
     public void onEvent(Event event) {
         if (event.type == Event.GameEvent.ABOUT_TO_START) {
-            // Nettoyage des compteurs statiques avant le début du match
             BattleshipGameState.resetPerformanceMetrics();
+
+            lastEffort[0] = 0;
+            lastEffort[1] = 0;
+        }
+
+        if (event.type == Event.GameEvent.ACTION_CHOSEN) {
+            AbstractGameState state = event.state;
+            int playerID = state.getCurrentPlayer();
+            
+            long currentTotalEffort = BattleshipGameState.attemptsPerSolve[playerID].get();
+            long netEffortThisTurn = currentTotalEffort - lastEffort[playerID];
+            lastEffort[playerID] = currentTotalEffort;
+            
+            Map<String, Object> turnData = new LinkedHashMap<>();
+            
+            turnData.put("GameID", state.getGameID());
+            turnData.put("Turn", state.getTurnCounter());
+            turnData.put("Player", playerID);
+            turnData.put("Effort_Net", netEffortThisTurn); // Net effort for this turn
+            
+            detailLogger.record(turnData);
         }
 
         if (event.type == Event.GameEvent.GAME_OVER) {
             AbstractGameState state = event.state;
             Map<String, Object> data = new LinkedHashMap<>();
             
-            // Basic game identification
+            // Game and player info for context
             data.put("GameID", state.getGameID());
-            data.put("Player0", game.getPlayers().get(0).toString());
-            data.put("Player1", game.getPlayers().get(1).toString());
+            data.put("P0_Agent", game.getPlayers().get(0).toString());
+            data.put("P1_Agent", game.getPlayers().get(1).toString());
 
-            // Final score to correlate computational effort with win efficacy
-            data.put("P0_Score", state.getGameScore(0));
-            
-            long calls = BattleshipGameState.totalFMCALLS.get();
-            long time = BattleshipGameState.totalTimeInCopy.get();
-            long fallbacks = BattleshipGameState.fallbackCount.get();
-            
-            data.put("TotalFMCalls", calls);
-            data.put("TotalTimeNS", time);
-            data.put("FallbackCount", fallbacks);
-            
-            // Calcul du ratio d'échec de la Smart Determinization
-            double fallbackRatio = calls > 0 ? (double) fallbacks / calls : 0;
-            data.put("FallbackRatio", fallbackRatio);
+            // Metrics for each player (calls, time, effort, score)
+            for (int i = 0; i < 2; i++) {
+                long calls = BattleshipGameState.totalFMCALLS[i].get();
+                long time = BattleshipGameState.totalTimeInCopy[i].get();
+                long effort = BattleshipGameState.attemptsPerSolve[i].get();
+                
+                data.put("P" + i + "_TotalFMCalls", calls);
+                data.put("P" + i + "_TotalTimeNS", time);
+                data.put("P" + i + "_AvgTimeCopyNS", calls > 0 ? (double) time / calls : 0);
 
-            // Analyse de l'efficacité temporelle
-            data.put("AvgTimePerCopyNS", calls > 0 ? (double)time / calls : 0);
+                // Total effort
+                data.put("P" + i + "_TotalSearchEffort", effort);
+                
+                // Measures how many attempts on average are needed to satisfy the constraints (i.e., find a consistent grid layout)
+                data.put("P" + i + "_AvgSearchEffort", calls > 0 ? (double) effort / calls : 0);
+                
+                // Final score for reference (not a performance metric, but useful for analysis)
+                data.put("P" + i + "_Score", state.getGameScore(i));
+            }
 
-            logger.record(data);
+            summaryLogger.record(data);
         }
     }
 
-    /**
-     * Processes remaining data and closes the logger.
-     */
-
     @Override
     public void report() { 
-        logger.processDataAndFinish(); 
+        summaryLogger.processDataAndFinish(); 
+        detailLogger.processDataAndFinish(); 
     }
 
     @Override
-    public void setGame(Game game) { 
-        this.game = game; 
-    }
+    public void setGame(Game game) { this.game = game; }
 
     @Override
-    public Game getGame() { 
-        return game; 
-    }
+    public Game getGame() { return game; }
 }
