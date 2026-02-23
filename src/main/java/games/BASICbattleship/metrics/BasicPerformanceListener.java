@@ -9,6 +9,10 @@ import games.BASICbattleship.BattleshipGameState;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import java.io.File;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 /**
  * A performance-focused listener that records computational efficiency metrics.
  * It tracks Forward Model (FM) calls and execution time to analyze AI performance.
@@ -22,9 +26,30 @@ public class BasicPerformanceListener implements IGameListener {
      * Initializes the listener and sets the output file path for performance data.
      */
     public BasicPerformanceListener() {
-        
-        // Output file configuration for performance tracking
-        this.logger = new FileStatsLogger("metrics/out/BASIC_Battleship_PERFORMANCE.csv");
+        // Laisser vide, le logger sera créé dans setOutputDirectory
+    }
+
+    @Override
+    public boolean setOutputDirectory(String... folders) {
+        if (folders == null || folders.length == 0) return false;
+
+        try {
+            String folderPath = String.join(File.separator, folders);
+            String fileName = "BASIC_Battleship_PERFORMANCE.csv";
+            String fullPath = folderPath + File.separator + fileName;
+
+            File file = new File(fullPath);
+            if (file.getParentFile() != null) {
+                file.getParentFile().mkdirs();
+            }
+
+            this.logger = new FileStatsLogger(fullPath);
+            System.out.println(">>> Performance Logger initialisé : " + fullPath);
+            return true; // On retourne un boolean comme demandé
+        } catch (Exception e) {
+            System.err.println("Erreur Logger : " + e.getMessage());
+            return false;
+        }
     }
 
     /**

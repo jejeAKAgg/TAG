@@ -9,6 +9,10 @@ import games.SMARTbattleship.BattleshipGameState;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import java.io.File;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 /**
  * A performance-focused listener that records computational efficiency metrics.
  * It tracks Forward Model (FM) calls and execution time to analyze AI performance.
@@ -22,9 +26,30 @@ public class SmartPerformanceListener implements IGameListener {
      * Initializes the listener and sets the output file path for performance data.
      */
     public SmartPerformanceListener() {
-        
-        // Output file configuration for performance tracking
-        this.logger = new FileStatsLogger("metrics/out/BASIC_Battleship_PERFORMANCE.csv");
+        // Laisser vide, le logger sera créé dans setOutputDirectory
+    }
+
+    @Override
+    public boolean setOutputDirectory(String... folders) {
+        if (folders == null || folders.length == 0) return false;
+
+        try {
+            String folderPath = String.join(File.separator, folders);
+            String fileName = "SMART_Battleship_PERFORMANCE.csv";
+            String fullPath = folderPath + File.separator + fileName;
+
+            File file = new File(fullPath);
+            if (file.getParentFile() != null) {
+                file.getParentFile().mkdirs();
+            }
+
+            this.logger = new FileStatsLogger(fullPath);
+            System.out.println(">>> Performance Logger initialisé : " + fullPath);
+            return true; // On retourne un boolean comme demandé
+        } catch (Exception e) {
+            System.err.println("Erreur Logger : " + e.getMessage());
+            return false;
+        }
     }
 
     /**
@@ -33,13 +58,11 @@ public class SmartPerformanceListener implements IGameListener {
      */
     @Override
     public void onEvent(Event event) {
-        
-        // Reset metrics before each match to ensure isolated data points
         if (event.type == Event.GameEvent.ABOUT_TO_START) {
+            // Nettoyage des compteurs statiques avant le début du match
             BattleshipGameState.resetPerformanceMetrics();
         }
 
-        // Record performance data once the game concludes
         if (event.type == Event.GameEvent.GAME_OVER) {
             AbstractGameState state = event.state;
             Map<String, Object> data = new LinkedHashMap<>();
@@ -48,21 +71,24 @@ public class SmartPerformanceListener implements IGameListener {
             data.put("GameID", state.getGameID());
             data.put("Player0", game.getPlayers().get(0).toString());
             data.put("Player1", game.getPlayers().get(1).toString());
-            
+
             // Final score to correlate computational effort with win efficacy
             data.put("P0_Score", state.getGameScore(0));
             
-            // Performance metrics extracted from the global counters in GameState
             long calls = BattleshipGameState.totalFMCALLS.get();
             long time = BattleshipGameState.totalTimeInCopy.get();
+            long fallbacks = BattleshipGameState.fallbackCount.get();
             
             data.put("TotalFMCalls", calls);
             data.put("TotalTimeNS", time);
+            data.put("FallbackCount", fallbacks);
             
-            // Calculate average time per state copy for efficiency analysis
-            data.put("AvgTimePerCopyNS", calls > 0 ? (double)time / calls : 0);
+            // Calcul du ratio d'échec de la Smart Determinization
+            double fallbackRatio = calls > 0 ? (double) fallbacks / calls : 0;
+            data.put("FallbackRatio", fallbackRatio);
 
-            data.put("FallbackCount", BattleshipGameState.fallbackCount.get());
+            // Analyse de l'efficacité temporelle
+            data.put("AvgTimePerCopyNS", calls > 0 ? (double)time / calls : 0);
 
             logger.record(data);
         }
