@@ -206,10 +206,10 @@ public enum GameType {
             Arrays.asList(Abstract, Deduction, Wargame),
             Collections.singletonList(Memory),
             games.SMARTbattleship.BattleshipGameState.class, games.SMARTbattleship.BattleshipForwardModel.class, games.SMARTbattleship.BattleshipParameters.class, games.SMARTbattleship.gui.BattleshipGUIManager.class),
-    /*BESTBattleship(2, 2,
+    BESTBattleship(2, 2,
             Arrays.asList(Abstract, Deduction, Wargame),
             Collections.singletonList(Memory),
-            games.BESTbattleship.BattleshipGameState.class, games.BESTbattleship.BattleshipForwardModel.class, games.BESTbattleship.BattleshipParameters.class, games.BESTbattleship.gui.BattleshipGUIManager.class),*/
+            games.BESTbattleship.BattleshipGameState.class, games.BESTbattleship.BattleshipForwardModel.class, games.BESTbattleship.BattleshipParameters.class, games.BESTbattleship.gui.BattleshipGUIManager.class),
     Connect4(2, 2,
             Arrays.asList(Simple, Abstract),
             Collections.singletonList(PatternBuilding),
