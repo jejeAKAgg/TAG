@@ -2,35 +2,28 @@ package games.BASICbattleship;
 
 import evaluation.RunGames;
 
+import java.util.Arrays;
+
 public class RunBattleshipTournament {
     public static void main(String[] args) {
         
-        String[] options = new String[]{
-            
-            // --- CONFIG ---
+        // Default options
+        String[] defaultOptions = new String[]{
             "game=BASICBattleship",
             "nPlayers=2",
-            
-            // --- CONFIG TOURNOI ---
-            "mode=exhaustive", // Make each agent play against every other agent in a round-robin format
-            "matchups=1000", // Total number of matches to be played between each pair of agents
+            "mode=exhaustive",
             "seed=42",
-            
-            // --- OTHER METRICS ---
             "listener=games.BASICbattleship.metrics.BasicPerformanceListener",
-            
-            // --- AGENTS ---
             "playerDirectory=src/main/java/games/BASICbattleship/agents",
-            
-            // --- RESULTS ---
-            "destDir=metrics/out/BASICbattleship_results",
-            
-            // --- LOGS ---
-            "verbose=true"
+            "verbose=false"
         };
+
+        String[] finalOptions = new String[defaultOptions.length + args.length];
+        System.arraycopy(defaultOptions, 0, finalOptions, 0, defaultOptions.length);
+        System.arraycopy(args, 0, finalOptions, defaultOptions.length, args.length);
         
         // RUN
-        System.out.println("Metrics: BASICBattleship");
-        RunGames.main(options);
+        System.out.println("Running BASICBattleship with config: " + Arrays.toString(finalOptions));
+        RunGames.main(finalOptions);
     }
 }
