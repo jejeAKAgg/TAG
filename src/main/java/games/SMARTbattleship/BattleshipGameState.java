@@ -83,6 +83,7 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
         
         } else {
 
+            // Player view: Only own ships are known, opponent's ships are randomized (smart determinisation)
             if (playerId == 0) {
                 copy.player0ShipGrid = this.player0ShipGrid.copy();
                 copy.player1ShipGrid = smartDeterminiseGrid(this.player0ShotGrid, this.player1ShipGrid.getWidth(), this.rnd);
@@ -178,6 +179,7 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
 
         fallbackCount.incrementAndGet();
 
+        // FALLBACK: If we fail to find a consistent layout after 50 attempts (very rare or indicates contradictory information), we return a random grid.
         resetGrid(hypothesis);
         randomizeGrid(hypothesis, r);
         return hypothesis;
