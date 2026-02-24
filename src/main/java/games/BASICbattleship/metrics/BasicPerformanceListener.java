@@ -10,8 +10,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import java.io.File;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * A performance-focused listener that records computational efficiency metrics.
@@ -26,7 +24,6 @@ public class BasicPerformanceListener implements IGameListener {
      * Initializes the listener and sets the output file path for performance data.
      */
     public BasicPerformanceListener() {
-        // Laisser vide, le logger sera créé dans setOutputDirectory
     }
 
     @Override
@@ -45,7 +42,7 @@ public class BasicPerformanceListener implements IGameListener {
 
             this.logger = new FileStatsLogger(fullPath);
             System.out.println(">>> Performance Logger initialisé : " + fullPath);
-            return true; // On retourne un boolean comme demandé
+            return true;
         } catch (Exception e) {
             System.err.println("Erreur Logger : " + e.getMessage());
             return false;
