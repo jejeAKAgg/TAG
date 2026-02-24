@@ -57,6 +57,7 @@ public class BestPerformanceListener implements IGameListener {
             long currentTotalEffort = BattleshipGameState.attemptsPerSolve[playerID].get();
             long netEffortThisTurn = currentTotalEffort - lastEffort[playerID];
             lastEffort[playerID] = currentTotalEffort;
+            long currentFallbacks = BattleshipGameState.fallbackCount[playerID].get();
             
             Map<String, Object> turnData = new LinkedHashMap<>();
             
@@ -64,6 +65,7 @@ public class BestPerformanceListener implements IGameListener {
             turnData.put("Turn", state.getTurnCounter());
             turnData.put("Player", playerID);
             turnData.put("Effort_Net", netEffortThisTurn); // Net effort for this turn
+            turnData.put("Fallbacks_Total", currentFallbacks);
             
             detailLogger.record(turnData);
         }
@@ -82,6 +84,7 @@ public class BestPerformanceListener implements IGameListener {
                 long calls = BattleshipGameState.totalFMCALLS[i].get();
                 long time = BattleshipGameState.totalTimeInCopy[i].get();
                 long effort = BattleshipGameState.attemptsPerSolve[i].get();
+                long fallbacks = BattleshipGameState.fallbackCount[i].get();
                 
                 data.put("P" + i + "_TotalFMCalls", calls);
                 data.put("P" + i + "_TotalTimeNS", time);
@@ -92,6 +95,11 @@ public class BestPerformanceListener implements IGameListener {
                 
                 // Measures how many attempts on average are needed to satisfy the constraints (i.e., find a consistent grid layout)
                 data.put("P" + i + "_AvgSearchEffort", calls > 0 ? (double) effort / calls : 0);
+
+                data.put("P" + i + "_TotalFallbacks", fallbacks);
+                // Taux de réussite du CSP (en %)
+                double successRate = calls > 0 ? (double)(calls - fallbacks) / calls * 100.0 : 0;
+                data.put("P" + i + "_CSP_SuccessRate", successRate);
                 
                 // Final score for reference (not a performance metric, but useful for analysis)
                 data.put("P" + i + "_Score", state.getGameScore(i));
