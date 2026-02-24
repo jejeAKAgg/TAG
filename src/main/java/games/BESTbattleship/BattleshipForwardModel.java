@@ -35,12 +35,19 @@ public class BattleshipForwardModel extends StandardForwardModel {
 
         int gridSize = params.gridSize; 
 
-        // Initialize Boards for both players with WATER nodes
-        BoardNode waterNode = new BoardNode(BattleshipConstants.WATER);
-        bgs.player0ShipGrid = new GridBoard(gridSize, gridSize, waterNode);
-        bgs.player1ShipGrid = new GridBoard(gridSize, gridSize, waterNode);
-        bgs.player0ShotGrid = new GridBoard(gridSize, gridSize, waterNode);
-        bgs.player1ShotGrid = new GridBoard(gridSize, gridSize, waterNode);
+        bgs.player0ShipGrid = new GridBoard(gridSize, gridSize);
+        bgs.player1ShipGrid = new GridBoard(gridSize, gridSize);
+        bgs.player0ShotGrid = new GridBoard(gridSize, gridSize);
+        bgs.player1ShotGrid = new GridBoard(gridSize, gridSize);
+
+        for (int x = 0; x < gridSize; x++) {
+            for (int y = 0; y < gridSize; y++) {
+                bgs.player0ShipGrid.setElement(x, y, new BoardNode(BattleshipConstants.WATER));
+                bgs.player1ShipGrid.setElement(x, y, new BoardNode(BattleshipConstants.WATER));
+                bgs.player0ShotGrid.setElement(x, y, new BoardNode(BattleshipConstants.WATER));
+                bgs.player1ShotGrid.setElement(x, y, new BoardNode(BattleshipConstants.WATER));
+            }
+        }
 
         Random rand = bgs.getRnd();
         
