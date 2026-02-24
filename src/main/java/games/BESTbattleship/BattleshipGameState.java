@@ -27,6 +27,7 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
     public static AtomicLong[] totalFMCALLS = {new AtomicLong(0), new AtomicLong(0)};
     public static AtomicLong[] totalTimeInCopy = {new AtomicLong(0), new AtomicLong(0)};
     public static AtomicLong[] attemptsPerSolve = {new AtomicLong(0), new AtomicLong(0)};
+    public static AtomicLong[] fallbackCount = {new AtomicLong(0), new AtomicLong(0)};
 
     // Current health points for both players (number of ship cells remaining)
     public int[] playerHP;
@@ -87,10 +88,10 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
             // Player view: Only own ships are known, opponent's ships are randomized (smart determinisation)
             if (playerId == 0) {
                 copy.player0ShipGrid = this.player0ShipGrid.copy();
-                copy.player1ShipGrid = smartDeterminiseGrid(this.player0ShotGrid, this.player1ShipGrid.getWidth(), this.rnd, 0);
+                copy.player1ShipGrid = smartDeterminiseGrid(this.player0ShotGrid, this.player1ShipGrid.getWidth(), copy.rnd, 0);
             } else {
                 copy.player1ShipGrid = this.player1ShipGrid.copy();
-                copy.player0ShipGrid = smartDeterminiseGrid(this.player1ShotGrid, this.player0ShipGrid.getWidth(), this.rnd, 1);
+                copy.player0ShipGrid = smartDeterminiseGrid(this.player1ShotGrid, this.player0ShipGrid.getWidth(), copy.rnd, 1);
             }
         }
 
@@ -122,9 +123,21 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
      * @return A logically consistent {@link GridBoard} representing a possible opponent state.
      */
     private GridBoard smartDeterminiseGrid(GridBoard knownShots, int size, Random r, int playerID) {
+
         BattleshipParameters params = (BattleshipParameters) getGameParameters();
 
-        GridBoard hypothesis = new GridBoard(size, size, new BoardNode(BattleshipConstants.WATER));
+        GridBoard hypothesis = new GridBoard(size, size);
+
+        for (int x = 0; x < size; x++) {
+            for (int y = 0; y < size; y++) {
+                hypothesis.setElement(x, y, new BoardNode(BattleshipConstants.WATER));
+            }
+        }
+
+        if (isGridEmpty(knownShots)) {
+            randomizeGrid(hypothesis, r);
+            return hypothesis;
+        }
 
         // OPTIMISATION 1 : "Map of Misses"
         // Used to quickly check if a cell is a known MISS without iterating through a list of coordinates (O(1) vs O(N))
@@ -219,7 +232,15 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
 
         // No fallbacks this time, we throw an exception to signal that the constraints are likely contradictory (e.g., too many hits without enough space to place ships)
         // helps identify potential bugs in the game logic or in the AI's understanding of the state
-        throw new IllegalStateException("CSP solver failed to find a valid state for player " + playerID + " after 10000 attempts.");
+        //throw new IllegalStateException("CSP solver failed to find a valid state for player " + playerID + " after 10000 attempts.");
+        
+        // CSP failed case
+        fallbackCount[playerID].incrementAndGet();
+        
+        resetGrid(hypothesis);
+        randomizeGrid(hypothesis, r);
+        
+        return hypothesis;
 
     }
 
@@ -249,7 +270,6 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
             else ((BoardNode)grid.getElement(x, y + i)).setComponentName(BattleshipConstants.SHIP);
         }
     }
-
 
     private void removeCoveredHits(List<int[]> hits, int x, int y, int size, boolean horizontal) {
         for (int i = hits.size() - 1; i >= 0; i--) {
@@ -289,7 +309,7 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
                 boolean placed = false;
                 int attempts = 0; 
                 
-                while (!placed && attempts < 100) {
+                while (!placed && attempts < 10000) {
                     int x = r.nextInt(grid.getWidth());
                     int y = r.nextInt(grid.getHeight());
                     boolean horizontal = r.nextBoolean();
@@ -318,6 +338,17 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
                 ((BoardNode)grid.getElement(x, y)).setComponentName(BattleshipConstants.WATER);
     }
 
+    private boolean isGridEmpty(GridBoard board) {
+        for (int x = 0; x < board.getWidth(); x++) {
+            for (int y = 0; y < board.getHeight(); y++) {
+                String name = ((BoardNode)board.getElement(x, y)).getComponentName();
+
+                if (!name.equals(BattleshipConstants.WATER)) return false;
+            }
+        }
+        return true;
+    }
+
 
 
     @Override
@@ -337,7 +368,7 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
 
     @Override
     protected double _getHeuristicScore(int playerId) {
-        return getGameScore(playerId) + (getClusteringBonus(playerId) * 0.1);
+        return getGameScore(playerId) + (getClusteringBonus(playerId) * 1);
     }
 
     private double getClusteringBonus(int playerId) {
@@ -418,6 +449,7 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
             totalFMCALLS[i].set(0);
             totalTimeInCopy[i].set(0);
             attemptsPerSolve[i].set(0);
+            fallbackCount[i].set(0);
         }
     }
 }
