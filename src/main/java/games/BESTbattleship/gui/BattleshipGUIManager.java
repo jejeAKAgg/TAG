@@ -4,7 +4,6 @@ import core.AbstractGameState;
 import core.AbstractPlayer;
 import core.Game;
 import games.BESTbattleship.BattleshipGameState;
-import games.BESTbattleship.BattleshipParameters;
 import gui.AbstractGUIManager;
 import gui.GamePanel;
 import gui.IScreenHighlight;
