@@ -23,6 +23,9 @@ public class BestPerformanceListener implements IGameListener {
 
     private long[] lastEffort = new long[2]; // To track the cumulative effort at the last recorded point for each player, allowing us to calculate net effort per turn too
 
+    /**
+     * Initializes the listener and sets the output file path for performance data.
+     */
     public BestPerformanceListener() {}
 
     @Override
@@ -96,8 +99,10 @@ public class BestPerformanceListener implements IGameListener {
                 // Measures how many attempts on average are needed to satisfy the constraints (i.e., find a consistent grid layout)
                 data.put("P" + i + "_AvgSearchEffort", calls > 0 ? (double) effort / calls : 0);
 
+                // Fallbacks indicate how many times the algorithm had to give up on the current search and try a new randomisation (not smart!)
                 data.put("P" + i + "_TotalFallbacks", fallbacks);
-                // Taux de réussite du CSP (en %)
+                
+                // CSP success rate
                 double successRate = calls > 0 ? (double)(calls - fallbacks) / calls * 100.0 : 0;
                 data.put("P" + i + "_CSP_SuccessRate", successRate);
                 
