@@ -17,34 +17,30 @@ import java.io.File;
  */
 public class BasicPerformanceListener implements IGameListener {
     
-    protected FileStatsLogger logger;
     protected Game game;
+
+    protected FileStatsLogger summaryLogger; // Logger for end-of-game summary metrics
+    protected FileStatsLogger detailLogger; // Logger for per-turn detailed metrics (e.g., effort per turn during smart determinisation)
+
+    private long[] lastEffort = new long[2]; // To track the cumulative effort at the last recorded point for each player, allowing us to calculate net effort per turn too
 
     /**
      * Initializes the listener and sets the output file path for performance data.
      */
-    public BasicPerformanceListener() {
-    }
+    public BasicPerformanceListener() {}
 
     @Override
     public boolean setOutputDirectory(String... folders) {
-        if (folders == null || folders.length == 0) return false;
-
         try {
-            String folderPath = String.join(File.separator, folders);
-            String fileName = "BASIC_Battleship_PERFORMANCE.csv";
-            String fullPath = folderPath + File.separator + fileName;
+            String path = String.join(File.separator, folders) + File.separator;
+            new File(path).mkdirs();
 
-            File file = new File(fullPath);
-            if (file.getParentFile() != null) {
-                file.getParentFile().mkdirs();
-            }
-
-            this.logger = new FileStatsLogger(fullPath);
-            System.out.println(">>> Performance Logger initialisé : " + fullPath);
+            this.summaryLogger = new FileStatsLogger(path + "BASIC_Battleship_SUMMARY.csv");
+            this.detailLogger = new FileStatsLogger(path + "BASIC_Battleship_DETAILS.csv");
+            
+            System.out.println(">>> Performance Loggers initialisés: " + path);
             return true;
         } catch (Exception e) {
-            System.err.println("Erreur Logger : " + e.getMessage());
             return false;
         }
     }
@@ -59,6 +55,28 @@ public class BasicPerformanceListener implements IGameListener {
         // Reset metrics before each match to ensure isolated data points
         if (event.type == Event.GameEvent.ABOUT_TO_START) {
             BattleshipGameState.resetPerformanceMetrics();
+
+            lastEffort[0] = 0;
+            lastEffort[1] = 0;
+        }
+
+        if (event.type == Event.GameEvent.ACTION_CHOSEN) {
+            AbstractGameState state = event.state;
+            int playerID = state.getCurrentPlayer();
+            
+            long currentTotalEffort = 0;
+            long netEffortThisTurn = 0;
+            long currentFallbacks = 0;
+            
+            Map<String, Object> turnData = new LinkedHashMap<>();
+            
+            turnData.put("GameID", state.getGameID());
+            turnData.put("Turn", state.getTurnCounter());
+            turnData.put("Player", playerID);
+            turnData.put("Effort_Net", netEffortThisTurn); // Net effort for this turn
+            turnData.put("Fallbacks_Total", currentFallbacks);
+            
+            detailLogger.record(turnData);
         }
 
         // Record performance data once the game concludes
@@ -66,25 +84,25 @@ public class BasicPerformanceListener implements IGameListener {
             AbstractGameState state = event.state;
             Map<String, Object> data = new LinkedHashMap<>();
             
-            // Basic game identification
+            // Game and player info for context
             data.put("GameID", state.getGameID());
-            data.put("Player0", game.getPlayers().get(0).toString());
-            data.put("Player1", game.getPlayers().get(1).toString());
-            
-            // Final score to correlate computational effort with win efficacy
-            data.put("P0_Score", state.getGameScore(0));
-            
-            // Performance metrics extracted from the global counters in GameState
-            long calls = BattleshipGameState.totalFMCALLS.get();
-            long time = BattleshipGameState.totalTimeInCopy.get();
-            
-            data.put("TotalFMCalls", calls);
-            data.put("TotalTimeNS", time);
-            
-            // Calculate average time per state copy for efficiency analysis
-            data.put("AvgTimePerCopyNS", calls > 0 ? (double)time / calls : 0);
+            data.put("P0_Agent", game.getPlayers().get(0).toString());
+            data.put("P1_Agent", game.getPlayers().get(1).toString());
 
-            logger.record(data);
+            // Metrics for each player (calls, time, effort, score)
+            for (int i = 0; i < 2; i++) {
+                long calls = BattleshipGameState.totalFMCALLS[i].get();
+                long time = BattleshipGameState.totalTimeInCopy[i].get();
+                
+                data.put("P" + i + "_TotalFMCalls", calls);
+                data.put("P" + i + "_TotalTimeNS", time);
+                data.put("P" + i + "_AvgTimeCopyNS", calls > 0 ? (double) time / calls : 0);
+                
+                // Final score for reference (not a performance metric, but useful for analysis)
+                data.put("P" + i + "_Score", state.getGameScore(i));
+            }
+
+            summaryLogger.record(data);
         }
     }
 
@@ -93,7 +111,8 @@ public class BasicPerformanceListener implements IGameListener {
      */
     @Override
     public void report() { 
-        logger.processDataAndFinish(); 
+        summaryLogger.processDataAndFinish(); 
+        detailLogger.processDataAndFinish(); 
     }
 
     @Override
