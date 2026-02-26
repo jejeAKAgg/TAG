@@ -286,7 +286,7 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
         }
     }
 
-     /**
+    /**
      * Sets up the own player's ships.
      * @param grid The player's grid.
      * @param r Random number generator.
@@ -368,7 +368,8 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
 
     @Override
     protected double _getHeuristicScore(int playerId) {
-        return getGameScore(playerId) + (getClusteringBonus(playerId) * 1);
+        BattleshipParameters params = (BattleshipParameters) getGameParameters();
+        return getGameScore(playerId) + (getClusteringBonus(playerId) * params.heuristicWeight);
     }
 
     private double getClusteringBonus(int playerId) {
