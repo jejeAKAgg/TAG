@@ -12,6 +12,9 @@ public class BattleshipParameters extends AbstractParameters {
     // Fixed ship sizes for simplicity
     public int[] shipSizes = new int[]{5, 4, 3, 3, 2};
 
+    // Default value for custom heuristic (0.0 here as it's BASIC)
+    public double heuristicWeight = 0.0;
+
     public BattleshipParameters() {
         super();
         setRandomSeed(System.currentTimeMillis());
