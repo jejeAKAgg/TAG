@@ -23,9 +23,9 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class BattleshipGameState extends AbstractGameState implements IPrintable, IGridGameState {
 
-    // Performance metrics for research analysis
-    public static AtomicLong totalFMCALLS = new AtomicLong(0);
-    public static AtomicLong totalTimeInCopy = new AtomicLong(0);
+    // Performance metrics for research analysis, indexed by PlayerID [0, 1]
+    public static AtomicLong[] totalFMCALLS = {new AtomicLong(0), new AtomicLong(0)};
+    public static AtomicLong[] totalTimeInCopy = {new AtomicLong(0), new AtomicLong(0)};
 
     // Current health points for both players (number of ship cells remaining)
     public int[] playerHP;
@@ -83,29 +83,105 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
         
         } else {
             
-            // Player view: Hidden information logic
-            // Initialize empty grids for the opponent's side
-            copy.player0ShipGrid = new GridBoard(player0ShipGrid.getWidth(), player0ShipGrid.getHeight(), new BoardNode(BattleshipConstants.WATER));
-            copy.player1ShipGrid = new GridBoard(player1ShipGrid.getWidth(), player1ShipGrid.getHeight(), new BoardNode(BattleshipConstants.WATER));
-
+            // Player view: Only own ships are known, opponent's ships are randomized (default randomization)
             if (playerId == 0) {
                 
                 // Player 0 sees their own ships but must "guess" (randomize) Player 1's ships
-                copy.player0ShipGrid = this.player0ShipGrid.copy(); 
-                copy.randomizeGrid(copy.player1ShipGrid, copy.rnd); 
+                copy.player0ShipGrid = this.player0ShipGrid.copy();
+                copy.player1ShipGrid = this.player1ShipGrid.copy();
+
+                copy.randomizeGrid(copy.player1ShipGrid, copy.rnd);
             } else {
                 
                 // Player 1 sees their own ships but must randomize Player 0's ships
                 copy.player1ShipGrid = this.player1ShipGrid.copy();
-                copy.randomizeGrid(copy.player0ShipGrid, copy.rnd); 
+                copy.player0ShipGrid = this.player0ShipGrid.copy();
+
+                copy.randomizeGrid(copy.player0ShipGrid, copy.rnd);
             }
         }
 
-        // Update performance metrics
-        totalFMCALLS.incrementAndGet();
-        totalTimeInCopy.addAndGet(System.nanoTime() - startTime);
+        // Metrics attribution to the requesting player
+        if (playerId >= 0 && playerId < 2) {
+            totalFMCALLS[playerId].incrementAndGet();
+            long duration = System.nanoTime() - startTime;
+            totalTimeInCopy[playerId].addAndGet(duration);
+        }
 
         return copy;
+    }
+
+    private boolean canPlaceShip(GridBoard grid, int x, int y, int size, boolean horizontal, boolean[][] missMap) {
+        int width = grid.getWidth();
+        int height = grid.getHeight();
+
+        if (horizontal) {
+            if (x < 0 || x + size > width || y < 0 || y >= height) return false;
+            for (int i = 0; i < size; i++) {
+                if (missMap[x + i][y]) return false;
+                if (!((BoardNode)grid.getElement(x + i, y)).getComponentName().equals(BattleshipConstants.WATER)) return false;
+            }
+        } else {
+            if (y < 0 || y + size > height || x < 0 || x >= width) return false;
+            for (int i = 0; i < size; i++) {
+                if (missMap[x][y + i]) return false;
+                if (!((BoardNode)grid.getElement(x, y + i)).getComponentName().equals(BattleshipConstants.WATER)) return false;
+            }
+        }
+        return true;
+    }
+
+    private void placeShip(GridBoard grid, int x, int y, int size, boolean horizontal) {
+        for (int i = 0; i < size; i++) {
+            if (horizontal) ((BoardNode)grid.getElement(x + i, y)).setComponentName(BattleshipConstants.SHIP);
+            else ((BoardNode)grid.getElement(x, y + i)).setComponentName(BattleshipConstants.SHIP);
+        }
+    }
+
+    /**
+     * Sets up the own player's ships.
+     * @param grid The player's grid.
+     * @param r Random number generator.
+     */
+    public void randomizeGrid(GridBoard grid, Random r) {
+        BattleshipParameters params = (BattleshipParameters) getGameParameters();
+        
+        boolean generationComplete = false;
+        
+        // Infinite loop until success
+        while (!generationComplete) {
+            
+            resetGrid(grid); 
+            generationComplete = true; 
+
+            // Setting up an empty MISS map
+            boolean[][] emptyMissMap = new boolean[grid.getWidth()][grid.getHeight()];
+
+            for (int shipSize : params.shipSizes) {
+                boolean placed = false;
+                int attempts = 0; 
+                
+                while (!placed && attempts < 10000) {
+                    int x = r.nextInt(grid.getWidth());
+                    int y = r.nextInt(grid.getHeight());
+                    boolean horizontal = r.nextBoolean();
+                    
+                    if (canPlaceShip(grid, x, y, shipSize, horizontal, emptyMissMap)) {
+                        placeShip(grid, x, y, shipSize, horizontal);
+                        placed = true;
+                    }
+                    attempts++;
+                }
+
+                // If we fail to place a ship, we mark the entire generation as failed and break out of the loop to restart from scratch
+                if (!placed) {
+                    generationComplete = false;
+                    break; // Restart
+                }
+            }
+
+            // Note: No increment of globalAttempts that stops everything. We keep going until it works
+        }
     }
 
     /**
@@ -114,80 +190,10 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
     private void resetGrid(GridBoard grid) {
         for(int x=0; x<grid.getWidth(); x++)
             for(int y=0; y<grid.getHeight(); y++)
-                grid.setElement(x, y, new BoardNode(BattleshipConstants.WATER));
+                ((BoardNode)grid.getElement(x, y)).setComponentName(BattleshipConstants.WATER);
     }
 
-    /**
-     * Checks if a ship of a given size can be placed at specific coordinates.
-     */
-    private boolean canPlaceShip(GridBoard grid, int x, int y, int size, boolean horizontal, List<int[]> missCoords) {
-        int width = grid.getWidth();
-        int height = grid.getHeight();
 
-        if (horizontal) {
-            if (x < 0 || x + size > width || y < 0 || y >= height) return false;
-            for (int i = 0; i < size; i++) {
-                if (!((BoardNode)grid.getElement(x + i, y)).getComponentName().equals(BattleshipConstants.WATER)) return false;
-            }
-        } else {
-            if (y < 0 || y + size > height || x < 0 || x >= width) return false;
-            for (int i = 0; i < size; i++) {
-                if (!((BoardNode)grid.getElement(x, y + i)).getComponentName().equals(BattleshipConstants.WATER)) return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Randomly places ships on the provided grid based on the game parameters.
-     * Uses a retry loop to ensure all ships are successfully placed.
-     */
-    public void randomizeGrid(GridBoard grid, Random r) {
-        BattleshipParameters params = (BattleshipParameters) getGameParameters();
-        boolean generationComplete = false;
-        
-        while (!generationComplete) {
-            resetGrid(grid);
-            generationComplete = true; 
-
-            for (int shipSize : params.shipSizes) {
-                boolean placed = false;
-                int attempts = 0; 
-                
-                while (!placed && attempts < 100) {
-                    int x = r.nextInt(grid.getWidth());
-                    int y = r.nextInt(grid.getHeight());
-                    boolean horizontal = r.nextBoolean();
-                    
-                    if (canPlaceShip(grid, x, y, shipSize, horizontal, new ArrayList<>())) {
-                        placeShip(grid, x, y, shipSize, horizontal);
-                        placed = true;
-                    }
-                    attempts++;
-                }
-
-                if (!placed) {
-                    generationComplete = false; 
-                    break; // Restart whole grid if placement fails
-                }
-            }
-        }
-    }
-
-    /**
-     * Writes the SHIP component name to the specified grid coordinates.
-     */
-    private void placeShip(GridBoard grid, int x, int y, int size, boolean horizontal) {
-        if (horizontal) {
-            for (int i = 0; i < size; i++) {
-                ((BoardNode)grid.getElement(x + i, y)).setComponentName(BattleshipConstants.SHIP);
-            }
-        } else {
-            for (int i = 0; i < size; i++) {
-                ((BoardNode)grid.getElement(x, y + i)).setComponentName(BattleshipConstants.SHIP);
-            }
-        }
-    }
 
     /**
      * Retrieves the current player's shot tracking grid (radar).
@@ -219,6 +225,11 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
         return countHits(playerId) / totalHealth;
     }
 
+    @Override
+    protected double _getHeuristicScore(int playerId) {
+        return getGameScore(playerId);
+    }
+
     /**
      * Counts the total number of HIT markers on the player's shot tracking grid.
      */
@@ -234,11 +245,6 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
             }
         }
         return hits;
-    }
-
-    @Override
-    protected double _getHeuristicScore(int playerId) {
-        return getGameScore(playerId);
     }
 
     @Override
@@ -274,25 +280,13 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
         System.out.println("BATTLESHIP STATE - PERSPECTIVE: " + (getCurrentPlayer() == 0 ? "P0" : "P1"));
         System.out.println("Phase: " + getGamePhase() + " | Round: " + getRoundCounter());
         System.out.println("HP: P0 = " + playerHP[0] + " | P1 = " + playerHP[1]);
-        System.out.println("----------------------------------------");
-        
-        // Affichage des grilles du joueur actuel
-        if (getCurrentPlayer() == 0) {
-            System.out.println("P0 SHIP GRID (Ma flotte):");
-            System.out.println(player0ShipGrid.toString());
-            System.out.println("P0 SHOT GRID (Mes tirs):");
-            System.out.println(player0ShotGrid.toString());
-        } else {
-            System.out.println("P1 SHIP GRID (Ma flotte):");
-            System.out.println(player1ShipGrid.toString());
-            System.out.println("P1 SHOT GRID (Mes tirs):");
-            System.out.println(player1ShotGrid.toString());
-        }
         System.out.println("========================================");
     }
 
     public static void resetPerformanceMetrics() {
-        totalFMCALLS.set(0);
-        totalTimeInCopy.set(0);
+        for (int i = 0; i < 2; i++) {
+            totalFMCALLS[i].set(0);
+            totalTimeInCopy[i].set(0);
+        }
     }
 }
