@@ -2,28 +2,66 @@ package games.BASICbattleship;
 
 import evaluation.RunGames;
 
-import java.util.Arrays;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class RunBattleshipTournament {
     public static void main(String[] args) {
         
-        // Default options
-        String[] defaultOptions = new String[]{
-            "game=BASICBattleship",
-            "nPlayers=2",
-            "mode=exhaustive",
-            "seed=42",
-            "listener=games.BASICbattleship.metrics.BasicPerformanceListener",
-            "playerDirectory=src/main/java/games/BASICbattleship/agents",
-            "verbose=false"
-        };
+        // Sysinfo
+        RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
+        List<String> jvmArgs = runtimeMxBean.getInputArguments();
+        long maxMemory = Runtime.getRuntime().maxMemory() / (1024 * 1024);
 
-        String[] finalOptions = new String[defaultOptions.length + args.length];
-        System.arraycopy(defaultOptions, 0, finalOptions, 0, defaultOptions.length);
-        System.arraycopy(args, 0, finalOptions, defaultOptions.length, args.length);
+        // Standard definition if no other args
+        Map<String, String> config = new LinkedHashMap<>();
+        config.put("game", "BASICBattleship");
+        config.put("nPlayers", "2");
+        config.put("matchups", "2500");
+        config.put("mode", "exhaustive");
+        config.put("seed", "42");
+        config.put("listener", "games.BASICbattleship.metrics.BasicPerformanceListener");
+        config.put("playerDirectory", "src/main/java/games/BASICbattleship/agents");
+        config.put("verbose", "false");
+
+        // Overwrite with own args put in console
+        for (String arg : args) {
+            String[] split = arg.split("=");
+            if (split.length == 2) {
+                config.put(split[0], split[1]);
+            }
+        }
+
+        String[] finalOptions = config.entrySet().stream()
+                .map(e -> e.getKey() + "=" + e.getValue())
+                .toArray(String[]::new);
+
+        // ARGS LOGS
+        System.out.println("\n" + "=".repeat(40));
+        System.out.println("BATTLESHIP EXPERIMENT EXECUTION LOG");
+        System.out.println("=".repeat(40));
         
-        // RUN
-        System.out.println("Running BASICBattleship with config: " + Arrays.toString(finalOptions));
+        System.out.println("\n[SYSTEM & JVM CONFIGURATION]");
+        System.out.println("  OS Name        : " + System.getProperty("os.name"));
+        System.out.println("  Java Version   : " + System.getProperty("java.version"));
+        System.out.println("  Max RAM Heap   : " + maxMemory + " MB");
+        System.out.println("  JVM VM Args    : " + jvmArgs);
+        
+        System.out.println("\n[APPLICATION ARGUMENTS (RunGames)]");
+        config.forEach((key, value) -> System.out.printf("  %-20s : %s%n", key, value));
+        
+        if (args.length > 0) {
+            System.out.println("\n[RAW CLI OVERRIDES]");
+            for (int i = 0; i < args.length; i++) {
+                System.out.println("  " + i + ": " + args[i]);
+            }
+        }
+        System.out.println("\n" + "=".repeat(70) + "\n");
+
+        // Running the tournament
         RunGames.main(finalOptions);
     }
 }
