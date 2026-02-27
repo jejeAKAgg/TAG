@@ -264,7 +264,6 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
         
         for (int i = 0; i < iterations; i++) {
             
-            // On utilise le même Random pour que les échantillons soient diversifiés
             GridBoard sample = smartDeterminiseGrid(knownShots, size, this.rnd, playerID);
             
             for (int x = 0; x < size; x++) {
@@ -276,7 +275,6 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
             }
         }
 
-        // Normalisation : On transforme les compteurs en probabilités 0.0-1.0
         for (int x = 0; x < size; x++) {
             for (int y = 0; y < size; y++) {
                 this.heatMap[x][y] /= iterations;
@@ -444,8 +442,7 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
     }
 
     /**
-     * Récompense l'IA si elle a réussi à obtenir des HITs sur des cases 
-     * que la Heat-Map jugeait hautement probables.
+     * Give a reward to the agent if it succeed to hit where Heat-Map showed high probability
      */
     private double calculateHeatMapInference(int playerId) {
         GridBoard myShots = (playerId == 0) ? player0ShotGrid : player1ShotGrid;
@@ -455,7 +452,7 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
         for (int x = 0; x < heatMap.length; x++) {
             for (int y = 0; y < heatMap[0].length; y++) {
                 String status = ((BoardNode)myShots.getElement(x, y)).getComponentName();
-                // Si c'est un HIT, on regarde si la probabilité calculée par le CSP était forte
+
                 if (status.equals(BattleshipConstants.HIT)) {
                     totalInferenceValue += heatMap[x][y];
                     hitCount++;
