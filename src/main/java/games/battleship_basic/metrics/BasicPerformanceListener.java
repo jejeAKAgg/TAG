@@ -61,7 +61,7 @@ public class BasicPerformanceListener implements IGameListener {
             lastEffort[1] = 0;
         }
 
-        if (event.type == Event.GameEvent.ACTION_CHOSEN) {
+        /*if (event.type == Event.GameEvent.ACTION_CHOSEN) {
             AbstractGameState state = event.state;
             int playerID = state.getCurrentPlayer();
             
@@ -78,7 +78,7 @@ public class BasicPerformanceListener implements IGameListener {
             turnData.put("Fallbacks_Total", currentFallbacks);
             
             detailLogger.record(turnData);
-        }
+        }*/
 
         // Record performance data once the game concludes
         if (event.type == Event.GameEvent.GAME_OVER) {
@@ -119,7 +119,7 @@ public class BasicPerformanceListener implements IGameListener {
     @Override
     public void report() { 
         summaryLogger.processDataAndFinish(); 
-        detailLogger.processDataAndFinish(); 
+        //detailLogger.processDataAndFinish(); 
     }
 
     @Override
