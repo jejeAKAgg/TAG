@@ -29,10 +29,10 @@ public class BattleshipForwardModel extends StandardForwardModel {
         BattleshipParameters params = (BattleshipParameters) firstState.getGameParameters();
 
         // --- VERIFICATION ---
-        System.out.println("\n[ENGINE SETUP] Starting new game...");
-        System.out.println("  Active Seed      : " + params.getRandomSeed());
-        System.out.println("  Heuristic Weight : O.O");
-        System.out.println("--------------------------------------\n");
+        //System.out.println("\n[ENGINE SETUP] Starting new game...");
+        //System.out.println("  Active Seed      : " + params.getRandomSeed());
+        //System.out.println("  Heuristic Weight : " + params.heuristicWeight);
+        //System.out.println("--------------------------------------\n");
         
         // Calculate total HP (sum of all ship lengths) to initialize the HP counters
         int totalHP = 0;
