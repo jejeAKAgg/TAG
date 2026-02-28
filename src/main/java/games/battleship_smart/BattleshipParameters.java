@@ -13,7 +13,7 @@ public class BattleshipParameters extends AbstractParameters {
     public int[] shipSizes = new int[]{5, 4, 3, 3, 2};
 
     // Default value for custom heuristic
-    public double heuristicWeight = 1;
+    public double heuristicWeight = 1.0;
 
     public BattleshipParameters() {
         super();
