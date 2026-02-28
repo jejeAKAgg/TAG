@@ -88,19 +88,17 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
 
         } else {
 
+            if (this.heatMap == null) { this.updateHeatMap(50, playerId); } // This time, we generate the Heat-Map only once per turn, and give it to each copy made during this turn
+
+            copy.heatMap = this.heatMap;
+
             // Player view: Only own ships are known, opponent's ships are randomized (smart determinisation)
             if (playerId == 0) {
                 copy.player0ShipGrid = this.player0ShipGrid.copy();
-
-                copy.updateHeatMap(50, 0);
-
-                copy.player1ShipGrid = smartDeterminiseGrid(this.player0ShotGrid, this.player1ShipGrid.getWidth(), copy.rnd, 0);
+                copy.player1ShipGrid = smartDeterminiseGrid(this.player0ShotGrid, this.player1ShipGrid.getWidth(), copy.rnd, 0, copy.heatMap);
             } else {
                 copy.player1ShipGrid = this.player1ShipGrid.copy();
-
-                copy.updateHeatMap(50, 1);
-
-                copy.player0ShipGrid = smartDeterminiseGrid(this.player1ShotGrid, this.player0ShipGrid.getWidth(), copy.rnd, 1);
+                copy.player0ShipGrid = smartDeterminiseGrid(this.player1ShotGrid, this.player0ShipGrid.getWidth(), copy.rnd, 1, copy.heatMap);
             }
         }
 
@@ -131,7 +129,7 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
      * @param playerID The ID of the player for whom we are generating the hypothesis (used for logging/metrics).
      * @return A logically consistent {@link GridBoard} representing a possible opponent state.
      */
-    private GridBoard smartDeterminiseGrid(GridBoard knownShots, int size, Random r, int playerID) {
+    private GridBoard smartDeterminiseGrid(GridBoard knownShots, int size, Random r, int playerID, double [][] currentHeatMap) {
 
         BattleshipParameters params = (BattleshipParameters) getGameParameters();
 
@@ -188,10 +186,14 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
             for (int shipSize : shipsToPlace) {
                 boolean placed = false;
 
+                if (!uncoveredHits.isEmpty() && currentHeatMap != null) {
+                    uncoveredHits.sort((a, b) -> Double.compare(currentHeatMap[b[0]][b[1]], currentHeatMap[a[0]][a[1]]));
+                }
+
                 // CASE A: There are still orphan HITs -> We MUST place the ship on them (Constraint Satisfaction)
                 if (!uncoveredHits.isEmpty()) {
                     for (int k=0; k<50; k++) {
-                        int[] targetHit = uncoveredHits.get(r.nextInt(uncoveredHits.size()));
+                        int[] targetHit = uncoveredHits.get(0);
                         
                         boolean horizontal = r.nextBoolean();
                         int offset = r.nextInt(shipSize); // Because the hit could be wherever on a long lenght ship (front, middle, back)
@@ -264,7 +266,7 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
         
         for (int i = 0; i < iterations; i++) {
             
-            GridBoard sample = smartDeterminiseGrid(knownShots, size, this.rnd, playerID);
+            GridBoard sample = smartDeterminiseGrid(knownShots, size, this.rnd, playerID, null);
             
             for (int x = 0; x < size; x++) {
                 for (int y = 0; y < size; y++) {
