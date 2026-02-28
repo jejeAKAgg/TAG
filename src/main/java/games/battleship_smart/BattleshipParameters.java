@@ -29,7 +29,8 @@ public class BattleshipParameters extends AbstractParameters {
     protected AbstractParameters _copy() {
         BattleshipParameters copy = new BattleshipParameters(getRandomSeed());
         copy.gridSize = this.gridSize;
-        copy.shipSizes = this.shipSizes.clone(); 
+        copy.shipSizes = this.shipSizes.clone();
+        copy.heuristicWeight = this.heuristicWeight;
         return copy;
     }
 
