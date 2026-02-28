@@ -12,6 +12,9 @@ public class BattleshipParameters extends AbstractParameters {
     // Fixed ship sizes for simplicity
     public int[] shipSizes = new int[]{5, 4, 3, 3, 2};
 
+    // Default value for heat map iterations
+    public int heatmapIterations = 10;
+
     // Default value for custom heuristic
     public double heuristicWeight = 1.0;
 
@@ -29,7 +32,9 @@ public class BattleshipParameters extends AbstractParameters {
     protected AbstractParameters _copy() {
         BattleshipParameters copy = new BattleshipParameters(getRandomSeed());
         copy.gridSize = this.gridSize;
-        copy.shipSizes = this.shipSizes.clone(); 
+        copy.shipSizes = this.shipSizes.clone();
+        copy.heatmapIterations = this.heatmapIterations;
+        copy.heuristicWeight = this.heuristicWeight;
         return copy;
     }
 
