@@ -88,7 +88,7 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
 
         } else {
 
-            if (this.heatMap == null) { this.updateHeatMap(50, playerId); } // This time, we generate the Heat-Map only once per turn, and give it to each copy made during this turn
+            if (this.heatMap == null) { this.updateHeatMap(((BattleshipParameters)getGameParameters()).heatmapIterations, playerId); } // This time, we generate the Heat-Map only once per turn, and give it to each copy made during this turn
 
             copy.heatMap = this.heatMap;
 

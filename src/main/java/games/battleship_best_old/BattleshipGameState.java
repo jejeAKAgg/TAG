@@ -92,13 +92,13 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
             if (playerId == 0) {
                 copy.player0ShipGrid = this.player0ShipGrid.copy();
 
-                copy.updateHeatMap(10, 0);
+                copy.updateHeatMap(((BattleshipParameters)getGameParameters()).heatmapIterations, 0);
 
                 copy.player1ShipGrid = smartDeterminiseGrid(this.player0ShotGrid, this.player1ShipGrid.getWidth(), copy.rnd, 0);
             } else {
                 copy.player1ShipGrid = this.player1ShipGrid.copy();
 
-                copy.updateHeatMap(10, 1);
+                copy.updateHeatMap(((BattleshipParameters)getGameParameters()).heatmapIterations, 1);
 
                 copy.player0ShipGrid = smartDeterminiseGrid(this.player1ShotGrid, this.player0ShipGrid.getWidth(), copy.rnd, 1);
             }
