@@ -146,11 +146,9 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
             return hypothesis;
         }
 
-        // OPTIMISATION 1 : "Map of Misses"
         // Used to quickly check if a cell is a known MISS without iterating through a list of coordinates (O(1) vs O(N))
         boolean[][] missMap = new boolean[size][size];
         
-        // OPTIMISATION 2: "Pre-allocated Hit List"
         // Used to avoid the overhead of dynamic resizing that comes with ArrayList when adding elements, based on maximum number of items
         List<int[]> hitCoords = new ArrayList<>(Arrays.stream(params.shipSizes).sum()); 
 
@@ -172,7 +170,6 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
         // Max attempts is a safeguard against infinite loops in cases of contradictory information (e.g., too many hits without enough space to place ships)
         for (int attempts = 0; attempts < 10000; attempts++) {
             
-            // OPTIMISATION 3 : "Fast Reset (Zero Allocation)""
             // Just set the component name to WATER for all cells instead of creating new BoardNode instances
             resetGrid(hypothesis);
             
@@ -206,7 +203,6 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
                             placeShip(hypothesis, startX, startY, shipSize, horizontal);
                             placed = true;
                             
-                            // OPTIMISATION 4: Manual Hit Removal
                             removeCoveredHits(uncoveredHits, startX, startY, shipSize, horizontal);
                             break;
                         }
@@ -240,10 +236,6 @@ public class BattleshipGameState extends AbstractGameState implements IPrintable
                 return hypothesis;
             }
         }
-
-        // No fallbacks this time, we throw an exception to signal that the constraints are likely contradictory (e.g., too many hits without enough space to place ships)
-        // helps identify potential bugs in the game logic or in the AI's understanding of the state
-        //throw new IllegalStateException("CSP solver failed to find a valid state for player " + playerID + " after 10000 attempts.");
         
         // CSP failed case
         fallbackCount[playerID].incrementAndGet();
