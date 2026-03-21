@@ -31,10 +31,8 @@ public class RunBattleshipTournament {
 
         // Listeners :
         //   1. BestPerformanceListener  → custom
-        //   2. TournamentMetricsGameListener → from TAG
         config.put("listener",
-            "games.battleship_best.metrics.BestPerformanceListener;" +
-            "evaluation.listeners.TournamentMetricsGameListener");
+            "games.battleship_best.metrics.BestPerformanceListener");
 
         // Output path
         config.put("destDir", "results/battleship_best/");
@@ -72,7 +70,7 @@ public class RunBattleshipTournament {
 
         System.out.println("\n" + "=".repeat(60) + "\n");
 
-        // ─START
+        // START
         RunGames.main(finalOptions);
     }
 }
