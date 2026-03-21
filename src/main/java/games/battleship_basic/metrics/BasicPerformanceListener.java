@@ -1,33 +1,23 @@
 package games.battleship_basic.metrics;
 
-import core.AbstractGameState;
 import core.Game;
 import evaluation.listeners.IGameListener;
 import evaluation.loggers.FileStatsLogger;
 import evaluation.metrics.Event;
 import games.battleship_basic.BattleshipGameState;
 
+import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import java.io.File;
 
-/**
- * A performance-focused listener that records computational efficiency metrics.
- * It tracks Forward Model (FM) calls and execution time to analyze AI performance.
- */
 public class BasicPerformanceListener implements IGameListener {
-    
+
     protected Game game;
 
-    protected FileStatsLogger summaryLogger; // Logger for end-of-game summary metrics
-    protected FileStatsLogger detailLogger; // Logger for per-turn detailed metrics (e.g., effort per turn during smart determinisation)
+    /** ENDGAME logger → SUMMARY.csv */
+    protected FileStatsLogger summaryLogger;
 
-    private long[] lastEffort = new long[2]; // To track the cumulative effort at the last recorded point for each player, allowing us to calculate net effort per turn too
-
-    /**
-     * Initializes the listener and sets the output file path for performance data.
-     */
     public BasicPerformanceListener() {}
 
     @Override
@@ -37,98 +27,66 @@ public class BasicPerformanceListener implements IGameListener {
             new File(path).mkdirs();
 
             this.summaryLogger = new FileStatsLogger(path + "BASIC_Battleship_SUMMARY.csv");
-            this.detailLogger = new FileStatsLogger(path + "BASIC_Battleship_DETAILS.csv");
-            
-            System.out.println(">>> Performance Loggers initialisés: " + path);
+
+            System.out.println(">>> BasicPerformanceListener → " + path);
             return true;
         } catch (Exception e) {
+            System.err.println("BasicPerformanceListener — error setOutputDirectory : " + e.getMessage());
             return false;
         }
     }
 
-    /**
-     * Responds to game events to manage metric lifecycle and recording.
-     * @param event The event occurring in the game engine.
-     */
+    // Event function(s)
     @Override
     public void onEvent(Event event) {
-        
-        // Reset metrics before each match to ensure isolated data points
+
+        // ABOUT_TO_START
         if (event.type == Event.GameEvent.ABOUT_TO_START) {
             BattleshipGameState.resetPerformanceMetrics();
-
-            lastEffort[0] = 0;
-            lastEffort[1] = 0;
         }
 
-        /*if (event.type == Event.GameEvent.ACTION_CHOSEN) {
-            AbstractGameState state = event.state;
-            int playerID = state.getCurrentPlayer();
-            
-            long currentTotalEffort = 0;
-            long netEffortThisTurn = 0;
-            long currentFallbacks = 0;
-            
-            Map<String, Object> turnData = new LinkedHashMap<>();
-            
-            turnData.put("GameID", state.getGameID());
-            turnData.put("Turn", state.getTurnCounter());
-            turnData.put("Player", playerID);
-            turnData.put("Effort_Net", netEffortThisTurn); // Net effort for this turn
-            turnData.put("Fallbacks_Total", currentFallbacks);
-            
-            detailLogger.record(turnData);
-        }*/
-
-        // Record performance data once the game concludes
+        // GAME OVER
         if (event.type == Event.GameEvent.GAME_OVER) {
             BattleshipGameState state = (BattleshipGameState) event.state;
-            Map<String, Object> data = new LinkedHashMap<>();
-            
-            // Game and player info for context
-            data.put("GameID", state.getGameID());
-            data.put("P0_Agent", game.getPlayers().get(0).toString());
-            data.put("P1_Agent", game.getPlayers().get(1).toString());
 
-            data.put("P0_AgentHP", state.playerHP[0]);
-            data.put("P1_AgentHP", state.playerHP[1]);
+            Map<String, Object> row = new LinkedHashMap<>();
 
-            int hpDifference = Math.abs(state.playerHP[0] - state.playerHP[1]);
-            data.put("Drama_HPDifference", hpDifference);
+            // Context
+            row.put("GameID",             state.getGameID());
+            row.put("P0_Agent",           game.getPlayers().get(0).toString());
+            row.put("P1_Agent",           game.getPlayers().get(1).toString());
 
-            // Metrics for each player (calls, time, effort, score)
+            // HP (for drama metrics)
+            row.put("P0_HP_Remaining",    state.playerHP[0]);
+            row.put("P1_HP_Remaining",    state.playerHP[1]);
+            row.put("Drama_HPDifference", Math.abs(state.playerHP[0] - state.playerHP[1]));
+
+            // Detailed metrics per player
             for (int i = 0; i < 2; i++) {
-                long calls = BattleshipGameState.totalFMCALLS[i].get();
-                long time = BattleshipGameState.totalTimeInCopy[i].get();
-                
-                data.put("P" + i + "_TotalFMCalls", calls);
-                data.put("P" + i + "_TotalTimeNS", time);
-                data.put("P" + i + "_AvgTimeCopyNS", calls > 0 ? (double) time / calls : 0);
-                
-                // Final score for reference (not a performance metric, but useful for analysis)
-                data.put("P" + i + "_Score", state.getGameScore(i));
+                long calls  = BattleshipGameState.totalFMCALLS[i].get();
+                long timeNS = BattleshipGameState.totalTimeInCopy[i].get();
+
+                String p = "P" + i + "_";
+                row.put(p + "TotalFMCalls",  calls);
+                row.put(p + "TotalTimeNS",   timeNS);
+                row.put(p + "AvgTimeCopyNS", calls > 0 ? (double) timeNS / calls : 0.0);
+                row.put(p + "Score",         state.getGameScore(i));
             }
 
-            summaryLogger.record(data);
+            if (summaryLogger != null) summaryLogger.record(row);
         }
     }
 
-    /**
-     * Processes remaining data and closes the logger.
-     */
+    // Overview
     @Override
-    public void report() { 
-        summaryLogger.processDataAndFinish(); 
-        //detailLogger.processDataAndFinish(); 
+    public void report() {
+        if (summaryLogger != null) summaryLogger.processDataAndFinish();
     }
 
+    // Other(s)
     @Override
-    public void setGame(Game game) { 
-        this.game = game; 
-    }
+    public void setGame(Game game) { this.game = game; }
 
     @Override
-    public Game getGame() { 
-        return game; 
-    }
+    public Game getGame() { return game; }
 }
