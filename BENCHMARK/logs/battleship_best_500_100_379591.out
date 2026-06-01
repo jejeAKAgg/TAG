@@ -1,0 +1,34 @@
+
+============================================================
+BATTLESHIP BEST — TOURNAMENT
+============================================================
+
+[SYSTEM]
+  OS           : Linux
+  Java         : 17.0.6
+  Max Heap     : 28672 MB
+  JVM Args     : [-Xms28g, -Xmx28g, -XX:+UseG1GC]
+
+[TOURNAMENT CONFIG]
+  game                 : BESTBattleship
+  nPlayers             : 2
+  matchups             : 10000
+  mode                 : exhaustive
+  seed                 : 2000
+  verbose              : false
+  playerDirectory      : /globalscratch/jelechat/TAG/agents_500
+  listener             : games.battleship_best.metrics.BestPerformanceListener
+  destDir              : /scratch/379591/results
+
+[CLI OVERRIDES]
+  seed=2000
+  matchups=10000
+  playerDirectory=/globalscratch/jelechat/TAG/agents_500
+  destDir=/scratch/379591/results
+  verbose=false
+
+============================================================
+
+Game: BESTBattleship, Players: 2
+Game: BESTBattleship, Players: 2, Mode: EXHAUSTIVE, TotalGames: 10000, GamesPerMatchup: 500
+>>> BestPerformanceListener → /scratch/379591/results/

@@ -1,0 +1,6 @@
+
+The following have been reloaded with a version change:
+  1) releases/2023a => releases/2024a
+
+/var/spool/slurm/job380097/slurm_script: line 13: nTMPDIR=/scratch/380097: No such file or directory
+cp: error writing '/globalscratch/jelechat/TAG/results/smart_1000/SMART_Battleship_DETAILS.csv': Communication error on send
