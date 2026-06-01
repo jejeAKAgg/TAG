@@ -1,0 +1,107 @@
+Game: SMARTBattleship, Players: 2, Mode: EXHAUSTIVE, TotalGames: 10000, GamesPerMatchup: 500
+Alpha calculations using Delta Ordinal
+Alpha: 10.0
+	0.000	IS-MCTS
+	0.373	RMHC
+	0.627	OSLA
+	0.000	MAST
+	0.000	Random
+
+Transition matrix for alpha = 10.0
+0.000	0.500	0.500	0.000	0.000	
+0.000	0.373	0.627	0.000	0.000	
+0.000	0.373	0.627	0.000	0.000	
+0.000	0.505	0.495	0.000	0.000	
+0.139	0.356	0.349	0.157	0.000	
+B matrix for alpha = 10.0
+0.519	0.549	0.548	0.522	0.352	
+0.549	1.442	1.624	0.554	0.351	
+0.548	1.624	1.935	0.553	0.351	
+0.522	0.554	0.553	0.525	0.352	
+0.352	0.351	0.351	0.352	0.292	
+The following agents cluster together, and may be considered equivalent: 
+	Cluster for IS-MCTS
+		IS-MCTS
+		MAST
+
+Alpha calculations using Win Rate
+Alpha: 10.0
+	0.000	IS-MCTS
+	0.373	RMHC
+	0.627	OSLA
+	0.000	MAST
+	0.000	Random
+
+Transition matrix for alpha = 10.0
+0.000	0.500	0.500	0.000	0.000	
+0.000	0.373	0.627	0.000	0.000	
+0.000	0.373	0.627	0.000	0.000	
+0.000	0.505	0.495	0.000	0.000	
+0.139	0.356	0.349	0.157	0.000	
+B matrix for alpha = 10.0
+0.519	0.549	0.548	0.522	0.352	
+0.549	1.442	1.624	0.554	0.351	
+0.548	1.624	1.935	0.553	0.351	
+0.522	0.554	0.553	0.525	0.352	
+0.352	0.351	0.351	0.352	0.292	
+The following agents cluster together, and may be considered equivalent: 
+	Cluster for IS-MCTS
+		IS-MCTS
+		MAST
+
+IS-MCTS got 1459.00 points. IS-MCTS won 14.6% of the 10000 games of the tournament. IS-MCTS won 36.5% of the 4000 games it played during the tournament.
+IS-MCTS got a mean score of 0.36.
+IS-MCTS won 1.1% of the 1000 games against RMHC.
+IS-MCTS won 1.1% of the 1000 games against OSLA.
+IS-MCTS won 48.4% of the 1000 games against MAST.
+IS-MCTS won 95.3% of the 1000 games against Random.
+
+RMHC got 3453.00 points. RMHC won 34.5% of the 10000 games of the tournament. RMHC won 86.3% of the 4000 games it played during the tournament.
+RMHC got a mean score of 0.86.
+RMHC won 98.9% of the 1000 games against IS-MCTS.
+RMHC won 47.4% of the 1000 games against OSLA.
+RMHC won 99.0% of the 1000 games against MAST.
+RMHC won 100.0% of the 1000 games against Random.
+
+OSLA got 3503.00 points. OSLA won 35.0% of the 10000 games of the tournament. OSLA won 87.6% of the 4000 games it played during the tournament.
+OSLA got a mean score of 0.88.
+OSLA won 98.9% of the 1000 games against IS-MCTS.
+OSLA won 52.6% of the 1000 games against RMHC.
+OSLA won 98.9% of the 1000 games against MAST.
+OSLA won 99.9% of the 1000 games against Random.
+
+MAST got 1496.00 points. MAST won 15.0% of the 10000 games of the tournament. MAST won 37.4% of the 4000 games it played during the tournament.
+MAST got a mean score of 0.37.
+MAST won 51.6% of the 1000 games against IS-MCTS.
+MAST won 1.0% of the 1000 games against RMHC.
+MAST won 1.1% of the 1000 games against OSLA.
+MAST won 95.9% of the 1000 games against Random.
+
+Random got 89.00 points. Random won 0.9% of the 10000 games of the tournament. Random won 2.2% of the 4000 games it played during the tournament.
+Random got a mean score of 0.02.
+Random won 4.7% of the 1000 games against IS-MCTS.
+Random won 0.0% of the 1000 games against RMHC.
+Random won 0.1% of the 1000 games against OSLA.
+Random won 4.1% of the 1000 games against MAST.
+
+---- Ranking ---- (+/- are standard errors on the mean calculated using a Normal approximation) 
+OSLA: Win rate 0.88 +/- 0.005	Mean Ordinal 1.12 +/- 0.01
+RMHC: Win rate 0.86 +/- 0.005	Mean Ordinal 1.14 +/- 0.01
+MAST: Win rate 0.37 +/- 0.008	Mean Ordinal 1.63 +/- 0.01
+IS-MCTS: Win rate 0.36 +/- 0.008	Mean Ordinal 1.64 +/- 0.01
+Random: Win rate 0.02 +/- 0.002	Mean Ordinal 1.98 +/- 0.00
+
+Alpha-rank by Win Rate
+	OSLA                          	0.63
+	RMHC                          	0.37
+	MAST                          	0.00
+	IS-MCTS                       	0.00
+	Random                        	0.00
+
+Alpha-rank by Ordinal Position
+	OSLA                          	0.63
+	RMHC                          	0.37
+	MAST                          	0.00
+	IS-MCTS                       	0.00
+	Random                        	0.00
+

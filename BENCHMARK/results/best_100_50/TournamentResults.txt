@@ -1,0 +1,115 @@
+Game: BESTBattleship, Players: 2, Mode: EXHAUSTIVE, TotalGames: 10000, GamesPerMatchup: 500
+Alpha calculations using Delta Ordinal
+Alpha: 10.0
+	0.000	IS-MCTS
+	0.613	RMHC
+	0.387	OSLA
+	0.000	MAST
+	0.000	Random
+
+Transition matrix for alpha = 10.0
+0.000	0.455	0.545	0.000	0.000	
+0.000	0.613	0.387	0.000	0.000	
+0.000	0.613	0.387	0.000	0.000	
+0.000	0.510	0.490	0.000	0.000	
+0.122	0.373	0.359	0.146	0.000	
+B matrix for alpha = 10.0
+0.519	0.535	0.534	0.517	0.365	
+0.535	1.884	1.632	0.557	0.368	
+0.534	1.632	1.491	0.555	0.368	
+0.517	0.557	0.555	0.521	0.366	
+0.365	0.368	0.368	0.366	0.304	
+The following agents cluster together, and may be considered equivalent: 
+	Cluster for IS-MCTS
+		IS-MCTS
+		MAST
+		Random
+	Cluster for RMHC
+		RMHC
+		OSLA
+
+Alpha calculations using Win Rate
+Alpha: 10.0
+	0.000	IS-MCTS
+	0.613	RMHC
+	0.387	OSLA
+	0.000	MAST
+	0.000	Random
+
+Transition matrix for alpha = 10.0
+0.000	0.455	0.545	0.000	0.000	
+0.000	0.613	0.387	0.000	0.000	
+0.000	0.613	0.387	0.000	0.000	
+0.000	0.510	0.490	0.000	0.000	
+0.122	0.373	0.359	0.146	0.000	
+B matrix for alpha = 10.0
+0.519	0.535	0.534	0.517	0.365	
+0.535	1.884	1.632	0.557	0.368	
+0.534	1.632	1.491	0.555	0.368	
+0.517	0.557	0.555	0.521	0.366	
+0.365	0.368	0.368	0.366	0.304	
+The following agents cluster together, and may be considered equivalent: 
+	Cluster for IS-MCTS
+		IS-MCTS
+		MAST
+		Random
+	Cluster for RMHC
+		RMHC
+		OSLA
+
+IS-MCTS got 1465.00 points. IS-MCTS won 14.7% of the 10000 games of the tournament. IS-MCTS won 36.6% of the 4000 games it played during the tournament.
+IS-MCTS got a mean score of 0.37.
+IS-MCTS won 1.6% of the 1000 games against RMHC.
+IS-MCTS won 0.7% of the 1000 games against OSLA.
+IS-MCTS won 49.8% of the 1000 games against MAST.
+IS-MCTS won 94.4% of the 1000 games against Random.
+
+RMHC got 3504.00 points. RMHC won 35.0% of the 10000 games of the tournament. RMHC won 87.6% of the 4000 games it played during the tournament.
+RMHC got a mean score of 0.88.
+RMHC won 98.4% of the 1000 games against IS-MCTS.
+RMHC won 52.3% of the 1000 games against OSLA.
+RMHC won 99.7% of the 1000 games against MAST.
+RMHC won 100.0% of the 1000 games against Random.
+
+OSLA got 3463.00 points. OSLA won 34.6% of the 10000 games of the tournament. OSLA won 86.6% of the 4000 games it played during the tournament.
+OSLA got a mean score of 0.87.
+OSLA won 99.3% of the 1000 games against IS-MCTS.
+OSLA won 47.7% of the 1000 games against RMHC.
+OSLA won 99.5% of the 1000 games against MAST.
+OSLA won 99.8% of the 1000 games against Random.
+
+MAST got 1463.00 points. MAST won 14.6% of the 10000 games of the tournament. MAST won 36.6% of the 4000 games it played during the tournament.
+MAST got a mean score of 0.37.
+MAST won 50.2% of the 1000 games against IS-MCTS.
+MAST won 0.3% of the 1000 games against RMHC.
+MAST won 0.5% of the 1000 games against OSLA.
+MAST won 95.3% of the 1000 games against Random.
+
+Random got 105.00 points. Random won 1.1% of the 10000 games of the tournament. Random won 2.6% of the 4000 games it played during the tournament.
+Random got a mean score of 0.03.
+Random won 5.6% of the 1000 games against IS-MCTS.
+Random won 0.0% of the 1000 games against RMHC.
+Random won 0.2% of the 1000 games against OSLA.
+Random won 4.7% of the 1000 games against MAST.
+
+---- Ranking ---- (+/- are standard errors on the mean calculated using a Normal approximation) 
+RMHC: Win rate 0.88 +/- 0.005	Mean Ordinal 1.12 +/- 0.01
+OSLA: Win rate 0.87 +/- 0.005	Mean Ordinal 1.13 +/- 0.01
+IS-MCTS: Win rate 0.37 +/- 0.008	Mean Ordinal 1.63 +/- 0.01
+MAST: Win rate 0.37 +/- 0.008	Mean Ordinal 1.63 +/- 0.01
+Random: Win rate 0.03 +/- 0.003	Mean Ordinal 1.97 +/- 0.00
+
+Alpha-rank by Win Rate
+	RMHC                          	0.61
+	OSLA                          	0.39
+	IS-MCTS                       	0.00
+	MAST                          	0.00
+	Random                        	0.00
+
+Alpha-rank by Ordinal Position
+	RMHC                          	0.61
+	OSLA                          	0.39
+	IS-MCTS                       	0.00
+	MAST                          	0.00
+	Random                        	0.00
+
